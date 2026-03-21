@@ -55,7 +55,10 @@ final class AppDependencyContainer: ObservableObject {
             apiKey: environment.revenueCatKey,
             sessionProvider: sessionProvider
         )
-        self.analyticsService = PostHogAnalyticsService(apiKey: environment.posthogKey)
+        self.analyticsService = PostHogAnalyticsService(
+            apiKey: environment.posthogKey,
+            host: environment.posthogHost
+        )
         self.crashService = SentryCrashReportingService(dsn: environment.sentryDSN)
         self.audioPlayerService = SystemAudioPlayerService()
 

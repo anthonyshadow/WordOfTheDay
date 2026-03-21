@@ -27,7 +27,7 @@
 
 ## PostHog
 - Add PostHog iOS SDK package.
-- Initialize with `POSTHOG_API_KEY`.
+- Initialize with `POSTHOG_API_KEY` and `POSTHOG_HOST`.
 - Replace prints in `PostHogAnalyticsService` with `capture(...)` calls.
 
 ## Sentry

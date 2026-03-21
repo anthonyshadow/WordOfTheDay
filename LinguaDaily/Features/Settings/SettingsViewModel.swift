@@ -59,6 +59,7 @@ final class SettingsViewModel: ObservableObject {
     func logOut() async {
         do {
             try await authService.signOut()
+            analytics.reset()
             appState.session = nil
             appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
             appState.resetNavigation()
@@ -71,6 +72,7 @@ final class SettingsViewModel: ObservableObject {
         // v1 stub: full backend delete-account workflow should remove auth user + profile + progress.
         do {
             try await authService.signOut()
+            analytics.reset()
             appState.session = nil
             appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
             appState.resetNavigation()

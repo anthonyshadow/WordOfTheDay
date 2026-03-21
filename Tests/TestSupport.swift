@@ -8,9 +8,19 @@ struct TrackedAnalyticsEvent: Equatable {
 
 final class TestAnalyticsService: AnalyticsServiceProtocol {
     private(set) var events: [TrackedAnalyticsEvent] = []
+    private(set) var identifiedSessions: [AuthSession] = []
+    private(set) var resetCallCount = 0
 
     func track(_ event: AnalyticsEvent, properties: [String : String]) {
         events.append(TrackedAnalyticsEvent(event: event, properties: properties))
+    }
+
+    func identify(_ session: AuthSession) {
+        identifiedSessions.append(session)
+    }
+
+    func reset() {
+        resetCallCount += 1
     }
 }
 

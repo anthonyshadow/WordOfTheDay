@@ -40,6 +40,7 @@ final class AuthViewModelTests: XCTestCase {
         XCTAssertEqual(auth.signInCalls.count, 1)
         XCTAssertEqual(auth.signUpCalls.count, 0)
         XCTAssertEqual(appState.session?.email, TestData.session().email)
+        XCTAssertEqual(analytics.identifiedSessions, [TestData.session()])
         XCTAssertSuccess(viewModel.phase)
         XCTAssertEqual(analytics.events.map(\.event), [.authEmailLoginTapped, .authSuccess])
     }

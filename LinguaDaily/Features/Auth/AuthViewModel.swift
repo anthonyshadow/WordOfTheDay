@@ -40,6 +40,7 @@ final class AuthViewModel: ObservableObject {
                 session = try await authService.signIn(email: email, password: password)
             }
             appState.session = session
+            analytics.identify(session)
             phase = .success(())
             analytics.track(.authSuccess, properties: [:])
         } catch {
@@ -52,7 +53,9 @@ final class AuthViewModel: ObservableObject {
         phase = .loading
         do {
             analytics.track(.authAppleTapped, properties: [:])
-            appState.session = try await authService.signInWithApple()
+            let session = try await authService.signInWithApple()
+            appState.session = session
+            analytics.identify(session)
             phase = .success(())
             analytics.track(.authSuccess, properties: [:])
         } catch {
@@ -65,7 +68,9 @@ final class AuthViewModel: ObservableObject {
         phase = .loading
         do {
             analytics.track(.authGoogleTapped, properties: [:])
-            appState.session = try await authService.signInWithGoogle()
+            let session = try await authService.signInWithGoogle()
+            appState.session = session
+            analytics.identify(session)
             phase = .success(())
             analytics.track(.authSuccess, properties: [:])
         } catch {

@@ -98,6 +98,32 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(error.actionTitle, "Retry")
     }
 
+    func testSubmitEmailAuthIdentifiesSessionBeforeCompletionEvents() async {
+        let onboardingService = TestOnboardingService()
+        let analytics = TestAnalyticsService()
+        let appState = AppState()
+        let viewModel = makeViewModel(
+            onboardingService: onboardingService,
+            analytics: analytics,
+            appState: appState
+        )
+        viewModel.email = "signup@example.com"
+        viewModel.password = "secret1"
+
+        await viewModel.submitEmailAuth()
+
+        XCTAssertEqual(appState.session, TestData.session(email: "signup@example.com"))
+        XCTAssertEqual(analytics.identifiedSessions, [TestData.session(email: "signup@example.com")])
+        XCTAssertEqual(analytics.events.map(\.event), [
+            .onboardingStarted,
+            .authViewOpened,
+            .authEmailSignupTapped,
+            .authSuccess,
+            .signupCompleted,
+            .onboardingCompleted
+        ])
+    }
+
     private func makeViewModel(
         onboardingService: TestOnboardingService = TestOnboardingService(),
         auth: TestAuthService = TestAuthService(),

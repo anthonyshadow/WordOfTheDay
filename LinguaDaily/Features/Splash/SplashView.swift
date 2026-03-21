@@ -49,6 +49,9 @@ struct SplashView: View {
         }
 
         if appState.session != nil {
+            if let session = appState.session {
+                dependencies.analyticsService.identify(session)
+            }
             await hydrateOnboardingStateIfNeeded()
             dependencies.analyticsService.track(.sessionRestored, properties: [:])
         }

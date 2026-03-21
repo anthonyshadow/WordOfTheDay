@@ -45,15 +45,17 @@ final class SettingsViewModelTests: XCTestCase {
 
     func testLogOutClearsSessionAndNavigation() async {
         let auth = TestAuthService()
+        let analytics = TestAnalyticsService()
         let appState = AppState()
         appState.session = TestData.session()
         appState.subscriptionState = SubscriptionState(tier: .premium, isTrial: false, expiresAt: nil)
         appState.path = [.settings, .paywall]
-        let viewModel = makeViewModel(auth: auth, appState: appState)
+        let viewModel = makeViewModel(auth: auth, analytics: analytics, appState: appState)
 
         await viewModel.logOut()
 
         XCTAssertEqual(auth.signOutCallCount, 1)
+        XCTAssertEqual(analytics.resetCallCount, 1)
         XCTAssertNil(appState.session)
         XCTAssertEqual(appState.subscriptionState.tier, .free)
         XCTAssertTrue(appState.path.isEmpty)
