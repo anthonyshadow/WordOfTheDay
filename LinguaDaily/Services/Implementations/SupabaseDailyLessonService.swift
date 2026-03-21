@@ -33,6 +33,7 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
     func updateLessonState(wordID: UUID, isLearned: Bool?, isFavorited: Bool?, isSavedForReview: Bool?) async throws {
         let userID = try await currentUserID()
         let existing = try await fetchProgress(userID: userID, wordID: wordID)
+        let now = Date()
         let merged = Self.mergeProgress(
             userID: userID,
             wordID: wordID,
@@ -40,17 +41,30 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
             isLearned: isLearned,
             isFavorited: isFavorited,
             isSavedForReview: isSavedForReview,
-            now: Date()
+            now: now
         )
 
-        try await client
-            .from("user_word_progress")
-            .upsert(
-                merged,
-                onConflict: "user_id,word_id",
-                returning: .minimal
-            )
-            .execute()
+        do {
+            try await client
+                .from("user_word_progress")
+                .upsert(
+                    merged,
+                    onConflict: "user_id,word_id",
+                    returning: .minimal
+                )
+                .execute()
+
+            if isSavedForReview != nil {
+                try await syncReviewQueue(
+                    userID: userID,
+                    wordID: wordID,
+                    mergedProgress: merged,
+                    referenceDate: now
+                )
+            }
+        } catch {
+            throw normalize(error)
+        }
     }
 
     func fetchWordDetail(wordID: UUID) async throws -> Word {
@@ -242,6 +256,63 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
             return rows.first
         } catch {
             throw normalize(error)
+        }
+    }
+
+    private func fetchQueuedReview(userID: UUID, wordID: UUID) async throws -> ReviewQueueRowDTO? {
+        do {
+            let rows: [ReviewQueueRowDTO] = try await client
+                .from("review_queue")
+                .select("id,user_id,word_id,due_at,state,last_outcome_correct,attempt_count,selected_option")
+                .eq("user_id", value: userID)
+                .eq("word_id", value: wordID)
+                .eq("state", value: "queued")
+                .limit(1)
+                .execute()
+                .value
+            return rows.first
+        } catch {
+            throw normalize(error)
+        }
+    }
+
+    private func syncReviewQueue(
+        userID: UUID,
+        wordID: UUID,
+        mergedProgress: UserWordProgressUpsertDTO,
+        referenceDate: Date
+    ) async throws {
+        if mergedProgress.is_saved_for_review {
+            let dueAt = mergedProgress.next_review_at ?? referenceDate
+            if let queuedReview = try await fetchQueuedReview(userID: userID, wordID: wordID) {
+                try await client
+                    .from("review_queue")
+                    .update(ReviewQueueDueAtUpdateDTO(due_at: dueAt), returning: .minimal)
+                    .eq("id", value: queuedReview.id)
+                    .execute()
+            } else {
+                try await client
+                    .from("review_queue")
+                    .insert(
+                        ReviewQueueInsertDTO(
+                            user_id: userID,
+                            word_id: wordID,
+                            due_at: dueAt,
+                            attempt_count: mergedProgress.total_reviews
+                        ),
+                        returning: .minimal
+                    )
+                    .execute()
+            }
+            return
+        }
+
+        if let queuedReview = try await fetchQueuedReview(userID: userID, wordID: wordID) {
+            try await client
+                .from("review_queue")
+                .update(ReviewQueueStateUpdateDTO(state: "skipped"), returning: .minimal)
+                .eq("id", value: queuedReview.id)
+                .execute()
         }
     }
 

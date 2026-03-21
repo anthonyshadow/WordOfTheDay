@@ -83,6 +83,48 @@ struct UserWordProgressDTO: Decodable {
     let last_reviewed_at: Date?
 }
 
+struct ReviewWordDTO: Decodable {
+    let id: UUID
+    let language_id: UUID
+    let lemma: String
+    let pronunciation_ipa: String?
+    let definition: String
+}
+
+struct WordDefinitionDTO: Decodable {
+    let id: UUID
+    let language_id: UUID
+    let definition: String
+}
+
+struct UserWordProgressWithWordDTO: Decodable {
+    let id: UUID
+    let user_id: UUID
+    let word_id: UUID
+    let status: WordStatus
+    let is_favorited: Bool
+    let is_saved_for_review: Bool
+    let consecutive_correct: Int
+    let total_reviews: Int
+    let correct_reviews: Int
+    let current_interval_days: Int
+    let next_review_at: Date?
+    let learned_at: Date?
+    let last_reviewed_at: Date?
+    let word: ReviewWordDTO
+}
+
+struct ReviewQueueRowDTO: Decodable {
+    let id: UUID
+    let user_id: UUID
+    let word_id: UUID
+    let due_at: Date
+    let state: String
+    let last_outcome_correct: Bool?
+    let attempt_count: Int
+    let selected_option: String?
+}
+
 struct ProfileDTO: Decodable {
     let id: UUID
     let email: String
@@ -113,6 +155,29 @@ struct ProgressMetricsDTO: Decodable {
     let correct_reviews: Int
     let learned_at: Date?
     let last_reviewed_at: Date?
+}
+
+struct ReviewQueueInsertDTO: Encodable {
+    let user_id: UUID
+    let word_id: UUID
+    let due_at: Date
+    let state = "queued"
+    let attempt_count: Int
+}
+
+struct ReviewQueueDueAtUpdateDTO: Encodable {
+    let due_at: Date
+}
+
+struct ReviewQueueStateUpdateDTO: Encodable {
+    let state: String
+}
+
+struct ReviewQueueCompletionUpdateDTO: Encodable {
+    let state = "completed"
+    let last_outcome_correct: Bool
+    let attempt_count: Int
+    let selected_option: String
 }
 
 extension LanguageDTO {
@@ -177,6 +242,26 @@ extension WordWithRelationsDTO {
         default:
             return 2
         }
+    }
+}
+
+extension UserWordProgressWithWordDTO {
+    var progress: UserWordProgressDTO {
+        UserWordProgressDTO(
+            id: id,
+            user_id: user_id,
+            word_id: word_id,
+            status: status,
+            is_favorited: is_favorited,
+            is_saved_for_review: is_saved_for_review,
+            consecutive_correct: consecutive_correct,
+            total_reviews: total_reviews,
+            correct_reviews: correct_reviews,
+            current_interval_days: current_interval_days,
+            next_review_at: next_review_at,
+            learned_at: learned_at,
+            last_reviewed_at: last_reviewed_at
+        )
     }
 }
 

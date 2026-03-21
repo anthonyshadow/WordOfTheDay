@@ -42,13 +42,8 @@ final class OnboardingViewModel: ObservableObject {
 
     @Published var step: Step = .welcome
     @Published var onboardingState: OnboardingState = .empty
-    @Published var availableLanguages: [Language] = [
-        SampleData.french,
-        Language(id: UUID(), code: "es", name: "Spanish", nativeName: "Espanol", isActive: true),
-        Language(id: UUID(), code: "ja", name: "Japanese", nativeName: "Nihongo", isActive: true),
-        Language(id: UUID(), code: "it", name: "Italian", nativeName: "Italiano", isActive: true),
-        Language(id: UUID(), code: "ko", name: "Korean", nativeName: "Hangukeo", isActive: true)
-    ]
+    @Published var availableLanguages: [Language] = []
+    @Published var languagePhase: AsyncPhase<[Language]> = .idle
     @Published var languageQuery = ""
 
     @Published var email = ""
@@ -93,7 +88,7 @@ final class OnboardingViewModel: ObservableObject {
         case .goal:
             return onboardingState.goal != nil
         case .language:
-            return onboardingState.language != nil
+            return hasValidLanguageSelection
         case .level:
             return onboardingState.level != nil
         case .reminder:
@@ -113,6 +108,17 @@ final class OnboardingViewModel: ObservableObject {
             $0.name.localizedCaseInsensitiveContains(languageQuery)
             || $0.nativeName.localizedCaseInsensitiveContains(languageQuery)
         }
+    }
+
+    func loadAvailableLanguagesIfNeeded() async {
+        guard case .idle = languagePhase else {
+            return
+        }
+        await reloadAvailableLanguages()
+    }
+
+    func retryLoadingLanguages() async {
+        await reloadAvailableLanguages()
     }
 
     func continueTapped() {
@@ -238,6 +244,44 @@ final class OnboardingViewModel: ObservableObject {
             "goal": onboardingState.goal?.rawValue ?? "unknown"
         ])
         asyncPhase = .success(())
+    }
+
+    private var hasValidLanguageSelection: Bool {
+        guard let selectedCode = onboardingState.language?.code.lowercased() else {
+            return false
+        }
+        return availableLanguages.contains { $0.code.lowercased() == selectedCode }
+    }
+
+    private func reloadAvailableLanguages() async {
+        languagePhase = .loading
+        do {
+            let languages = try await onboardingService.fetchAvailableLanguages()
+            availableLanguages = languages
+            reconcileSelectedLanguage(with: languages)
+            languagePhase = languages.isEmpty ? .empty : .success(languages)
+        } catch {
+            availableLanguages = []
+            crashReporter.capture(error, context: ["feature": "onboarding_languages"])
+            languagePhase = .failure((error as? AppError)?.viewError ?? .generic)
+        }
+    }
+
+    private func reconcileSelectedLanguage(with languages: [Language]) {
+        guard let selectedCode = onboardingState.language?.code.lowercased() else {
+            return
+        }
+
+        if let canonicalLanguage = languages.first(where: { $0.code.lowercased() == selectedCode }) {
+            if onboardingState.language != canonicalLanguage {
+                onboardingState.language = canonicalLanguage
+                persistState()
+            }
+            return
+        }
+
+        onboardingState.language = nil
+        persistState()
     }
 
     private func persistState() {

@@ -47,6 +47,9 @@ struct OnboardingFlowView: View {
         .padding(LDSpacing.lg)
         .background(LDColor.background.ignoresSafeArea())
         .animation(.easeInOut(duration: 0.2), value: viewModel.step)
+        .task {
+            await viewModel.loadAvailableLanguagesIfNeeded()
+        }
     }
 
     @ViewBuilder

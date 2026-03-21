@@ -133,6 +133,7 @@ final class TodayViewModel: ObservableObject {
         do {
             try await lessonService.updateLessonState(wordID: lesson.word.id, isLearned: nil, isFavorited: nil, isSavedForReview: lesson.isSavedForReview)
             phase = .success(lesson)
+            reviewDueCount = (try? await reviewService.fetchReviewQueue().count) ?? reviewDueCount
             analytics.track(.dailyWordSavedForReview, properties: ["value": lesson.isSavedForReview ? "true" : "false"])
         } catch {
             crash.capture(error, context: ["feature": "toggle_saved"])

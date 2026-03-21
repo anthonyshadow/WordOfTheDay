@@ -107,6 +107,45 @@ final class TestNotificationService: NotificationServiceProtocol {
     }
 }
 
+final class TestOnboardingService: OnboardingServiceProtocol {
+    var storedState: OnboardingState = .empty
+    var loadError: Error?
+    var saveError: Error?
+    var fetchAvailableLanguagesResult: Result<[Language], Error> = .success([SampleData.french])
+    var syncError: Error?
+
+    private(set) var savedStates: [OnboardingState] = []
+    private(set) var syncedStates: [OnboardingState] = []
+    private(set) var fetchAvailableLanguagesCallCount = 0
+
+    func loadOnboardingState() throws -> OnboardingState {
+        if let loadError {
+            throw loadError
+        }
+        return storedState
+    }
+
+    func saveOnboardingState(_ state: OnboardingState) throws {
+        if let saveError {
+            throw saveError
+        }
+        storedState = state
+        savedStates.append(state)
+    }
+
+    func fetchAvailableLanguages() async throws -> [Language] {
+        fetchAvailableLanguagesCallCount += 1
+        return try fetchAvailableLanguagesResult.get()
+    }
+
+    func syncAuthenticatedState(_ state: OnboardingState) async throws {
+        syncedStates.append(state)
+        if let syncError {
+            throw syncError
+        }
+    }
+}
+
 final class TestReviewService: ReviewServiceProtocol {
     var queue: [ReviewCard] = []
     var fetchError: Error?

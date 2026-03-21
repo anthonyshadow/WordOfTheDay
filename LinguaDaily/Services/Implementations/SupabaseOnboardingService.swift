@@ -19,6 +19,21 @@ final class SupabaseOnboardingService: OnboardingServiceProtocol {
         try store.set(state, for: key)
     }
 
+    func fetchAvailableLanguages() async throws -> [Language] {
+        do {
+            let languages: [LanguageDTO] = try await client
+                .from("languages")
+                .select("id,code,name,native_name,is_active")
+                .eq("is_active", value: true)
+                .order("name", ascending: true)
+                .execute()
+                .value
+            return languages.map { $0.toModel() }
+        } catch {
+            throw normalize(error)
+        }
+    }
+
     func syncAuthenticatedState(_ state: OnboardingState) async throws {
         do {
             let session = try await client.auth.session

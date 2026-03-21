@@ -16,6 +16,7 @@
 		0F9689A2A7E5FA5C654E1721 /* SentenceCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F25439D084A9DE95F30784 /* SentenceCardView.swift */; };
 		13AA9BA69B45697332D548C0 /* AuthServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B82576AA295F6D1D398474 /* AuthServiceProtocol.swift */; };
 		1529117146AB96DC9D44863C /* ReviewServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5ACD37A8F4E64B91264DC37 /* ReviewServiceProtocol.swift */; };
+		15745B8755D9F7118B446A4F /* SupabaseReviewArchiveMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB863CBA61F7377DF028EA90 /* SupabaseReviewArchiveMappingTests.swift */; };
 		15E6826D39F76DAE474FB72A /* ArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846B7E2AEC3647EF72BDE9A8 /* ArchiveView.swift */; };
 		1B19AD5903CC542BCFE4C6A0 /* StubAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6119634DEF49A717345C965B /* StubAuthService.swift */; };
 		1C66B19FDA9CE7F14E9B02FB /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27A9CC21C0B2C6B4E387E8A /* TodayView.swift */; };
@@ -50,6 +51,7 @@
 		4B2BDE3DEA715B0595F72C6A /* LDCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED70C264681FF21C841AF42 /* LDCard.swift */; };
 		4B52938CCBE0FFA6DB0893B0 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73A881FA579A926CA46BB19 /* UserProfile.swift */; };
 		535934B81533B3E53783882D /* SupabaseDataMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44D2A818F9CFC93086A3313 /* SupabaseDataMappingTests.swift */; };
+		5515A09CC717BFB985322C95 /* OnboardingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B218896AEFE0E9996F4792C /* OnboardingViewModelTests.swift */; };
 		58C3945B5CE14CAA515A6451 /* LDListRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A565A62CA7B85A7A140D70 /* LDListRow.swift */; };
 		59CD7F65ED0B5113469E4CAE /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7835DCF21E26A6678B87A15F /* ProfileViewModel.swift */; };
 		5A3C57171C9319015580B8C7 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C291B5B8042AAC3D8F64F9 /* AppEnvironment.swift */; };
@@ -125,6 +127,7 @@
 		F860055C5259BEA7158A4AB9 /* AudioPlayerServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4ED1040601236CB4D2A6EA5 /* AudioPlayerServiceProtocol.swift */; };
 		F94120730E0FD590F512F1E3 /* StubNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5511F1512BE5A132440615DE /* StubNotificationService.swift */; };
 		FED4DCBA909CB3DD691383FA /* PreviewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADBDEEA3169850413348EA1E /* PreviewFactory.swift */; };
+		FF02B1CDF6AF354B49998E87 /* SupabaseArchiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C0B447735A748FC4CE6520 /* SupabaseArchiveService.swift */; };
 		FF4342FBA810973E0F5AE812 /* LDFilterChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 755511D9963AB376455954E7 /* LDFilterChip.swift */; };
 		FF507737B6B4D27FD8D95472 /* ReviewViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB1345D9CF843865FA445D79 /* ReviewViewModelTests.swift */; };
 /* End PBXBuildFile section */
@@ -172,6 +175,7 @@
 		564DFB68B4847C14AB2C4449 /* SupabaseDailyLessonService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseDailyLessonService.swift; sourceTree = "<group>"; };
 		5770B2EFF47FF0640C25BC01 /* StubArchiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubArchiveService.swift; sourceTree = "<group>"; };
 		59EBB6FE774A9F9F7BA0530E /* NotificationServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServiceProtocol.swift; sourceTree = "<group>"; };
+		5B218896AEFE0E9996F4792C /* OnboardingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModelTests.swift; sourceTree = "<group>"; };
 		5B7EEF4B8250DF479818E2FA /* LocalKeyValueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalKeyValueStore.swift; sourceTree = "<group>"; };
 		5E248E07F1724ACB08953AED /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
 		5ED70C264681FF21C841AF42 /* LDCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDCard.swift; sourceTree = "<group>"; };
@@ -183,6 +187,7 @@
 		688B6CD86262C887BF27E3C6 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		6A6E904A67C0BF17EAC6C2A8 /* LanguageSelectionStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSelectionStepView.swift; sourceTree = "<group>"; };
 		6AD0E283155E3623ADECEA7E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		71C0B447735A748FC4CE6520 /* SupabaseArchiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseArchiveService.swift; sourceTree = "<group>"; };
 		74D5F68F0B8F7A40DE5485BE /* AsyncPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncPhase.swift; sourceTree = "<group>"; };
 		755511D9963AB376455954E7 /* LDFilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDFilterChip.swift; sourceTree = "<group>"; };
 		7835DCF21E26A6678B87A15F /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
@@ -229,6 +234,7 @@
 		C54291E7B0086ECE63293904 /* TodayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModel.swift; sourceTree = "<group>"; };
 		C8024E6C2867ABDADD5CA9D5 /* StubCrashReportingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubCrashReportingService.swift; sourceTree = "<group>"; };
 		CB0EC2A1699BB916E61A7058 /* AuthViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModelTests.swift; sourceTree = "<group>"; };
+		CB863CBA61F7377DF028EA90 /* SupabaseReviewArchiveMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseReviewArchiveMappingTests.swift; sourceTree = "<group>"; };
 		CC4704669A28904920C9151B /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		CCA195E5F6C55F0EEE113D69 /* StubAudioPlayerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubAudioPlayerService.swift; sourceTree = "<group>"; };
 		D27A9CC21C0B2C6B4E387E8A /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
@@ -295,6 +301,7 @@
 				600D006A117964A4DC87E903 /* RevenueCatSubscriptionService.swift */,
 				3D1564172C83FA964A64E84B /* ReviewScheduler.swift */,
 				3CFBCCA91BACA475B9FF8675 /* SentryCrashReportingService.swift */,
+				71C0B447735A748FC4CE6520 /* SupabaseArchiveService.swift */,
 				A538ACB07C999C05A624632C /* SupabaseAuthService.swift */,
 				C0CE64B9C36E97E3026F08DA /* SupabaseConfig.swift */,
 				564DFB68B4847C14AB2C4449 /* SupabaseDailyLessonService.swift */,
@@ -624,11 +631,13 @@
 				5E248E07F1724ACB08953AED /* AppStateTests.swift */,
 				CB0EC2A1699BB916E61A7058 /* AuthViewModelTests.swift */,
 				A43D597ED0C4243E73185DB6 /* DailyWordAssignerTests.swift */,
+				5B218896AEFE0E9996F4792C /* OnboardingViewModelTests.swift */,
 				B0D3CC46D46DB9A6E0CC4E85 /* ReviewSchedulerTests.swift */,
 				EB1345D9CF843865FA445D79 /* ReviewViewModelTests.swift */,
 				BA6BFE720CC7741A75AC5AAA /* SettingsViewModelTests.swift */,
 				B99A73D021943189D064E1CE /* SupabaseAuthServiceTests.swift */,
 				A44D2A818F9CFC93086A3313 /* SupabaseDataMappingTests.swift */,
+				CB863CBA61F7377DF028EA90 /* SupabaseReviewArchiveMappingTests.swift */,
 				E9EED4D9E67691D8D047D3B4 /* TestSupport.swift */,
 			);
 			path = Tests;
@@ -741,11 +750,13 @@
 				4334261A212CFBD73B42CC9E /* AppStateTests.swift in Sources */,
 				CE73CEDE76868E2EE266C583 /* AuthViewModelTests.swift in Sources */,
 				A866F0431B9E1927A1817E6F /* DailyWordAssignerTests.swift in Sources */,
+				5515A09CC717BFB985322C95 /* OnboardingViewModelTests.swift in Sources */,
 				3378DE76B6C084566F299545 /* ReviewSchedulerTests.swift in Sources */,
 				FF507737B6B4D27FD8D95472 /* ReviewViewModelTests.swift in Sources */,
 				732CC407751DDDDB5948707A /* SettingsViewModelTests.swift in Sources */,
 				615B6B9C99360DC00441950A /* SupabaseAuthServiceTests.swift in Sources */,
 				535934B81533B3E53783882D /* SupabaseDataMappingTests.swift in Sources */,
+				15745B8755D9F7118B446A4F /* SupabaseReviewArchiveMappingTests.swift in Sources */,
 				7276FC6BD05821C5C847B4FC /* TestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -845,6 +856,7 @@
 				F84143F7145B722D410A9D0C /* StubSubscriptionService.swift in Sources */,
 				5E992AD155DBFB9BE0A3FBC9 /* Subscription.swift in Sources */,
 				A4A345F87BAD0FDD4E4537A0 /* SubscriptionServiceProtocol.swift in Sources */,
+				FF02B1CDF6AF354B49998E87 /* SupabaseArchiveService.swift in Sources */,
 				2D3B08391447976951D635E7 /* SupabaseAuthService.swift in Sources */,
 				DBDD5CA124B84FB97E50C2F9 /* SupabaseConfig.swift in Sources */,
 				493DB8FCBC227DEAC8CEE483 /* SupabaseDTOs.swift in Sources */,
