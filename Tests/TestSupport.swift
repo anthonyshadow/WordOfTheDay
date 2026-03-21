@@ -24,6 +24,38 @@ final class TestCrashReportingService: CrashReportingServiceProtocol {
     }
 }
 
+final class TestSubscriptionService: SubscriptionServiceProtocol {
+    var fetchResult: Result<SubscriptionState, Error> = .success(SubscriptionState(tier: .free, isTrial: false, expiresAt: nil))
+    var monthlyResult: Result<SubscriptionState, Error> = .success(SubscriptionState(tier: .premium, isTrial: true, expiresAt: nil))
+    var yearlyResult: Result<SubscriptionState, Error> = .success(SubscriptionState(tier: .premium, isTrial: true, expiresAt: nil))
+    var restoreResult: Result<SubscriptionState, Error> = .success(SubscriptionState(tier: .free, isTrial: false, expiresAt: nil))
+
+    private(set) var fetchCallCount = 0
+    private(set) var purchaseMonthlyCallCount = 0
+    private(set) var purchaseYearlyCallCount = 0
+    private(set) var restoreCallCount = 0
+
+    func fetchSubscriptionState() async throws -> SubscriptionState {
+        fetchCallCount += 1
+        return try fetchResult.get()
+    }
+
+    func purchaseMonthly() async throws -> SubscriptionState {
+        purchaseMonthlyCallCount += 1
+        return try monthlyResult.get()
+    }
+
+    func purchaseYearly() async throws -> SubscriptionState {
+        purchaseYearlyCallCount += 1
+        return try yearlyResult.get()
+    }
+
+    func restorePurchases() async throws -> SubscriptionState {
+        restoreCallCount += 1
+        return try restoreResult.get()
+    }
+}
+
 final class TestAuthService: AuthServiceProtocol {
     private(set) var signInCalls: [(email: String, password: String)] = []
     private(set) var signUpCalls: [(email: String, password: String)] = []

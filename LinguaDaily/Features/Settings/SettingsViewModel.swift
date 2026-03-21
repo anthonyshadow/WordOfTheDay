@@ -60,6 +60,7 @@ final class SettingsViewModel: ObservableObject {
         do {
             try await authService.signOut()
             appState.session = nil
+            appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
             appState.resetNavigation()
         } catch {
             crash.capture(error, context: ["feature": "settings_logout"])
@@ -71,6 +72,7 @@ final class SettingsViewModel: ObservableObject {
         do {
             try await authService.signOut()
             appState.session = nil
+            appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
             appState.resetNavigation()
         } catch {
             crash.capture(error, context: ["feature": "settings_delete_account"])

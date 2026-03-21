@@ -61,6 +61,8 @@ final class PaywallViewModel: ObservableObject {
             appState.subscriptionState = state
             phase = .success(state)
             analytics.track(.purchaseSuccess, properties: ["tier": state.tier.rawValue])
+        } catch is CancellationError {
+            phase = .success(appState.subscriptionState)
         } catch {
             crash.capture(error, context: ["feature": "purchase"])
             analytics.track(.purchaseFailed, properties: [:])

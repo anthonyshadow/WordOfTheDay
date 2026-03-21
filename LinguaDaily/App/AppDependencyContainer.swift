@@ -20,13 +20,20 @@ final class AppDependencyContainer: ObservableObject {
     let crashService: CrashReportingServiceProtocol
     let audioPlayerService: AudioPlayerServiceProtocol
 
-    init(modelContext: ModelContext) {
-        self.environment = .load()
-        self.appState = AppState()
+    init(
+        modelContext: ModelContext,
+        environment: AppEnvironment = .load(),
+        keyValueStore: LocalKeyValueStore = UserDefaultsStore()
+    ) {
+        self.environment = environment
+        let appState = AppState()
+        self.appState = appState
 
-        let keyValueStore = UserDefaultsStore()
         let cacheStore = LocalCacheStore(modelContext: modelContext)
         self.cacheStore = cacheStore
+        let sessionProvider: @MainActor @Sendable () -> AuthSession? = { [weak appState] in
+            appState?.session
+        }
 
         if let supabaseConfig = environment.supabaseConfig {
             self.authService = SupabaseAuthService(config: supabaseConfig)
@@ -43,11 +50,14 @@ final class AppDependencyContainer: ObservableObject {
             self.archiveService = StubArchiveService()
             self.progressService = StubProgressService()
         }
-        self.notificationService = StubNotificationService()
-        self.subscriptionService = StubSubscriptionService()
-        self.analyticsService = StubAnalyticsService()
-        self.crashService = StubCrashReportingService()
-        self.audioPlayerService = StubAudioPlayerService()
+        self.notificationService = LocalNotificationService(store: keyValueStore)
+        self.subscriptionService = RevenueCatSubscriptionService(
+            apiKey: environment.revenueCatKey,
+            sessionProvider: sessionProvider
+        )
+        self.analyticsService = PostHogAnalyticsService(apiKey: environment.posthogKey)
+        self.crashService = SentryCrashReportingService(dsn: environment.sentryDSN)
+        self.audioPlayerService = SystemAudioPlayerService()
 
         if let savedOnboarding = try? onboardingService.loadOnboardingState() {
             appState.onboardingState = savedOnboarding

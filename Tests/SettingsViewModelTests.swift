@@ -47,6 +47,7 @@ final class SettingsViewModelTests: XCTestCase {
         let auth = TestAuthService()
         let appState = AppState()
         appState.session = TestData.session()
+        appState.subscriptionState = SubscriptionState(tier: .premium, isTrial: false, expiresAt: nil)
         appState.path = [.settings, .paywall]
         let viewModel = makeViewModel(auth: auth, appState: appState)
 
@@ -54,6 +55,7 @@ final class SettingsViewModelTests: XCTestCase {
 
         XCTAssertEqual(auth.signOutCallCount, 1)
         XCTAssertNil(appState.session)
+        XCTAssertEqual(appState.subscriptionState.tier, .free)
         XCTAssertTrue(appState.path.isEmpty)
     }
 
