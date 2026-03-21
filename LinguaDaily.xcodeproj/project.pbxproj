@@ -26,6 +26,7 @@
 		274C8A39CB6B8166740CCB2D /* LDSearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02AB9192DD295834561AFE /* LDSearchField.swift */; };
 		28BFE76C84634FF976407BAD /* RevenueCatSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600D006A117964A4DC87E903 /* RevenueCatSubscriptionService.swift */; };
 		2BB9DE9B2A5C3EC4CDED0948 /* NotificationPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E609661832090AE630FB687 /* NotificationPreference.swift */; };
+		2D3B08391447976951D635E7 /* SupabaseAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A538ACB07C999C05A624632C /* SupabaseAuthService.swift */; };
 		2ED87996E5A480D986BC3FB0 /* StatCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD582BBBB2900CAFDFA6219 /* StatCardView.swift */; };
 		2F5B40F5F367E8B48A4BA28B /* StubPushRegistrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F913430710458FF27116C33D /* StubPushRegistrationService.swift */; };
 		2FBEDCFD7DCFE8DE0C0F412A /* AnalyticsEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999E72DE61B2A0C55FF25642 /* AnalyticsEvent.swift */; };
@@ -60,6 +61,7 @@
 		6015F33B4B20A53EDCE58C98 /* CacheEntities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0898D4C03D45C469A323192C /* CacheEntities.swift */; };
 		603AC1969AADA65F3A99BB5E /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE4C3FFAF7DBB67FF97F643B /* Progress.swift */; };
 		60749CF5F006174F1556FD15 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06266788D92EA6E530D082E /* PaywallView.swift */; };
+		615B6B9C99360DC00441950A /* SupabaseAuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99A73D021943189D064E1CE /* SupabaseAuthServiceTests.swift */; };
 		684DF31E40B8FE0F6111D487 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C1C59EAB44A40A4177C0C10A /* Supabase */; };
 		69437A73E1F004E19119532A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7869D3CC9A7670EDB58F7E6 /* RootView.swift */; };
 		69FABC6D3B5D78E730863F73 /* GoalSelectionStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DE21F76D558095EC0ADB13F /* GoalSelectionStepView.swift */; };
@@ -202,14 +204,17 @@
 		9FA74D2A3094090B3288813F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		A0F25439D084A9DE95F30784 /* SentenceCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceCardView.swift; sourceTree = "<group>"; };
 		A43D597ED0C4243E73185DB6 /* DailyWordAssignerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyWordAssignerTests.swift; sourceTree = "<group>"; };
+		A538ACB07C999C05A624632C /* SupabaseAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthService.swift; sourceTree = "<group>"; };
 		A5B87E0F4C188F07E4C12F83 /* LDColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDColor.swift; sourceTree = "<group>"; };
 		A8621E6273BBAC26AD303932 /* PostHogAnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogAnalyticsService.swift; sourceTree = "<group>"; };
 		A8B3599B061E1FE7DFFD6ED7 /* Word.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Word.swift; sourceTree = "<group>"; };
 		ADBDEEA3169850413348EA1E /* PreviewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewFactory.swift; sourceTree = "<group>"; };
+		AE3D369E517B92AE4FA5D141 /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppConfig.xcconfig; sourceTree = "<group>"; };
 		AF4D520CDC158232B59A9179 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
 		B09519854D3D5280EECEBE1E /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		B0D3CC46D46DB9A6E0CC4E85 /* ReviewSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewSchedulerTests.swift; sourceTree = "<group>"; };
 		B28B4D72A1C47A791D1E7400 /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
+		B99A73D021943189D064E1CE /* SupabaseAuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthServiceTests.swift; sourceTree = "<group>"; };
 		BA6BFE720CC7741A75AC5AAA /* SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModelTests.swift; sourceTree = "<group>"; };
 		BDE97B310FA50B98EA3E96FF /* StubOnboardingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubOnboardingService.swift; sourceTree = "<group>"; };
 		C0CE64B9C36E97E3026F08DA /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
@@ -284,6 +289,7 @@
 				600D006A117964A4DC87E903 /* RevenueCatSubscriptionService.swift */,
 				3D1564172C83FA964A64E84B /* ReviewScheduler.swift */,
 				3CFBCCA91BACA475B9FF8675 /* SentryCrashReportingService.swift */,
+				A538ACB07C999C05A624632C /* SupabaseAuthService.swift */,
 				C0CE64B9C36E97E3026F08DA /* SupabaseConfig.swift */,
 				564DFB68B4847C14AB2C4449 /* SupabaseDailyLessonService.swift */,
 				47143AEE84BB8E97EDC0687B /* SupabaseDTOs.swift */,
@@ -374,6 +380,7 @@
 		523FC8B7F248549193560CB0 = {
 			isa = PBXGroup;
 			children = (
+				B4873B99F5C4DF9A35A9B8E1 /* Config */,
 				839B8156F87E677ADEF2888D /* LinguaDaily */,
 				EF3F3B1FFC4517D9E312A97F /* Tests */,
 				67E187486D79D09B16B0C343 /* Products */,
@@ -522,6 +529,14 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		B4873B99F5C4DF9A35A9B8E1 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				AE3D369E517B92AE4FA5D141 /* AppConfig.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		B985CF7683A2FCDD38FC6F1A /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
@@ -604,6 +619,7 @@
 				B0D3CC46D46DB9A6E0CC4E85 /* ReviewSchedulerTests.swift */,
 				EB1345D9CF843865FA445D79 /* ReviewViewModelTests.swift */,
 				BA6BFE720CC7741A75AC5AAA /* SettingsViewModelTests.swift */,
+				B99A73D021943189D064E1CE /* SupabaseAuthServiceTests.swift */,
 				E9EED4D9E67691D8D047D3B4 /* TestSupport.swift */,
 			);
 			path = Tests;
@@ -719,6 +735,7 @@
 				3378DE76B6C084566F299545 /* ReviewSchedulerTests.swift in Sources */,
 				FF507737B6B4D27FD8D95472 /* ReviewViewModelTests.swift in Sources */,
 				732CC407751DDDDB5948707A /* SettingsViewModelTests.swift in Sources */,
+				615B6B9C99360DC00441950A /* SupabaseAuthServiceTests.swift in Sources */,
 				7276FC6BD05821C5C847B4FC /* TestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -818,6 +835,7 @@
 				F84143F7145B722D410A9D0C /* StubSubscriptionService.swift in Sources */,
 				5E992AD155DBFB9BE0A3FBC9 /* Subscription.swift in Sources */,
 				A4A345F87BAD0FDD4E4537A0 /* SubscriptionServiceProtocol.swift in Sources */,
+				2D3B08391447976951D635E7 /* SupabaseAuthService.swift in Sources */,
 				DBDD5CA124B84FB97E50C2F9 /* SupabaseConfig.swift in Sources */,
 				493DB8FCBC227DEAC8CEE483 /* SupabaseDTOs.swift in Sources */,
 				F6E698C8FAE4D9171D2FE4DE /* SupabaseDailyLessonService.swift in Sources */,
@@ -845,6 +863,7 @@
 /* Begin XCBuildConfiguration section */
 		0F573F359B19C40DDE7CDC9E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE3D369E517B92AE4FA5D141 /* AppConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -949,6 +968,7 @@
 		};
 		B9849B75D165071C7D6AE2E5 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE3D369E517B92AE4FA5D141 /* AppConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";

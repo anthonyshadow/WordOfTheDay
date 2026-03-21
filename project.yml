@@ -12,6 +12,9 @@ targets:
     platform: iOS
     sources:
       - path: LinguaDaily
+    configFiles:
+      Debug: Config/AppConfig.xcconfig
+      Release: Config/AppConfig.xcconfig
     settings:
       base:
         INFOPLIST_FILE: LinguaDaily/Resources/Info.plist

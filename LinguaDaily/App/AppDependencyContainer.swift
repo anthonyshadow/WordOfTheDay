@@ -28,7 +28,11 @@ final class AppDependencyContainer: ObservableObject {
         let cacheStore = LocalCacheStore(modelContext: modelContext)
         self.cacheStore = cacheStore
 
-        self.authService = StubAuthService()
+        if let supabaseConfig = environment.supabaseConfig {
+            self.authService = SupabaseAuthService(config: supabaseConfig)
+        } else {
+            self.authService = StubAuthService()
+        }
         self.onboardingService = StubOnboardingService(store: keyValueStore)
         self.dailyLessonService = StubDailyLessonService()
         self.reviewService = StubReviewService()
