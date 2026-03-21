@@ -47,7 +47,7 @@ LinguaDaily/
     Settings/
     Paywall/
 Docs/
-Supabase/
+supabase/
   migrations/
 Tests/
 ```

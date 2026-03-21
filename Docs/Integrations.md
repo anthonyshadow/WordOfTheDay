@@ -13,7 +13,7 @@
 ## Supabase
 - Add `SUPABASE_URL` + `SUPABASE_ANON_KEY` in `Environment.xcconfig`.
 - Implement concrete services using `APIClient` against Supabase REST/RPC.
-- Run migrations from `Supabase/migrations`.
+- Run migrations from `supabase/migrations` with `supabase link --project-ref amrfdqdgrmvzpsmrtbnu` and `supabase db push`.
 
 ## APNs
 - Enable push notifications capability.

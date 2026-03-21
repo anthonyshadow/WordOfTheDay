@@ -17,7 +17,7 @@ Production-oriented SwiftUI + MVVM iPhone codebase scaffold for LinguaDaily, bac
 ## Repository structure
 - `LinguaDaily/`: iOS app source.
 - `Docs/`: architecture, decisions, analytics, testing/integration docs.
-- `Supabase/migrations/`: schema + seed SQL.
+- `supabase/migrations/`: schema + seed SQL.
 - `Tests/`: unit tests for review scheduling, daily assignment, and free-tier limits.
 - `project.yml`: XcodeGen project definition.
 
@@ -30,10 +30,12 @@ Production-oriented SwiftUI + MVVM iPhone codebase scaffold for LinguaDaily, bac
 
 ## Supabase setup
 1. Create Supabase project.
-2. Run:
-   - `Supabase/migrations/20260308130000_initial_schema.sql`
-   - `Supabase/migrations/20260308131000_seed_french.sql`
-3. Confirm RLS policies are active.
+2. Install the Supabase CLI.
+3. Log in: `npm run db:login`
+4. Link the repo to the project: `npm run db:link`
+5. Push migrations: `npm run db:push`
+6. Optional: inspect migration status with `npm run db:migrations`
+7. Confirm RLS policies are active.
 
 ## V1 technical decisions
 - Review intervals: `1 -> 3 -> 7 -> 14 -> 30` days; incorrect resets to 1 day.

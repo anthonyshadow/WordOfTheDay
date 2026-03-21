@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Local environment and secrets
+Config/Environment.xcconfig
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Xcode user state
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcuserdatad/
+*.xccheckout
+*.xcscmblueprint
+
+# Swift / Xcode build artifacts
+.build/
+DerivedData/
+build/
+.swiftpm/
+
+# Node / CLI tooling
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Supabase CLI local state
+supabase/.temp/

@@ -12,6 +12,16 @@ final class DailyWordAssignerTests: XCTestCase {
         XCTAssertEqual(result?.id, allWords.first?.id)
     }
 
+    func testAssignsLowestFrequencyWordEvenWhenInputIsUnsorted() {
+        let assigner = DailyWordAssigner()
+        let allWords = SampleData.words.shuffled()
+
+        let result = assigner.assignWord(allWords: allWords, alreadyAssignedWordIDs: [])
+
+        XCTAssertEqual(result?.lemma, "Bonjour")
+        XCTAssertEqual(result?.frequencyRank, 20)
+    }
+
     func testFallsBackWhenExhausted() {
         let assigner = DailyWordAssigner()
         let allWords = SampleData.words
@@ -20,5 +30,14 @@ final class DailyWordAssignerTests: XCTestCase {
         let result = assigner.assignWord(allWords: allWords, alreadyAssignedWordIDs: assignedIDs)
 
         XCTAssertNotNil(result)
+        XCTAssertEqual(result?.lemma, "Bonjour")
+    }
+
+    func testReturnsNilWhenNoWordsExist() {
+        let assigner = DailyWordAssigner()
+
+        let result = assigner.assignWord(allWords: [], alreadyAssignedWordIDs: [])
+
+        XCTAssertNil(result)
     }
 }

@@ -1,0 +1,13 @@
+{
+  "name": "wordapp",
+  "private": true,
+  "scripts": {
+    "db:login": "supabase login",
+    "db:link": "supabase link --project-ref amrfdqdgrmvzpsmrtbnu",
+    "db:migrations": "supabase migration list",
+    "db:push": "supabase db push"
+  },
+  "devDependencies": {
+    "supabase": "^2.83.0"
+  }
+}

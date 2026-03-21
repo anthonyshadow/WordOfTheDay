@@ -16,6 +16,21 @@ final class ReviewSchedulerTests: XCTestCase {
         XCTAssertEqual(result.nextStatus, .learned)
     }
 
+    func testCorrectAnswerCapsAtMaximumInterval() {
+        let scheduler = ReviewScheduler()
+
+        let result = scheduler.schedule(
+            previousIntervalDays: 30,
+            consecutiveCorrect: 2,
+            totalReviews: 7,
+            wasCorrect: true,
+            referenceDate: Date(timeIntervalSince1970: 0)
+        )
+
+        XCTAssertEqual(result.nextIntervalDays, 30)
+        XCTAssertEqual(result.nextStatus, .learned)
+    }
+
     func testIncorrectAnswerResetsInterval() {
         let scheduler = ReviewScheduler()
         let result = scheduler.schedule(
@@ -31,6 +46,21 @@ final class ReviewSchedulerTests: XCTestCase {
         XCTAssertEqual(result.nextStatus, .reviewDue)
     }
 
+    func testUnknownIntervalUsesFirstProgressionStage() {
+        let scheduler = ReviewScheduler()
+
+        let result = scheduler.schedule(
+            previousIntervalDays: 99,
+            consecutiveCorrect: 0,
+            totalReviews: 0,
+            wasCorrect: true,
+            referenceDate: Date(timeIntervalSince1970: 0)
+        )
+
+        XCTAssertEqual(result.nextIntervalDays, 3)
+        XCTAssertEqual(result.nextStatus, .learned)
+    }
+
     func testMasteryAfterThreshold() {
         let scheduler = ReviewScheduler()
         let result = scheduler.schedule(
@@ -42,5 +72,21 @@ final class ReviewSchedulerTests: XCTestCase {
         )
 
         XCTAssertEqual(result.nextStatus, .mastered)
+    }
+
+    func testNextReviewDateMatchesComputedInterval() {
+        let scheduler = ReviewScheduler()
+        let referenceDate = Date(timeIntervalSince1970: 1_700_000_000)
+
+        let result = scheduler.schedule(
+            previousIntervalDays: 3,
+            consecutiveCorrect: 2,
+            totalReviews: 3,
+            wasCorrect: true,
+            referenceDate: referenceDate
+        )
+
+        let expectedDate = Calendar.current.date(byAdding: .day, value: 7, to: referenceDate)
+        XCTAssertEqual(result.nextReviewAt, expectedDate)
     }
 }

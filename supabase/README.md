@@ -1,11 +1,12 @@
 # Supabase Setup
 
 ## Apply migrations
-1. Create a Supabase project.
-2. Run SQL migrations in order:
-   - `20260308130000_initial_schema.sql`
-   - `20260308131000_seed_french.sql`
-3. Verify RLS is enabled for all user tables.
+1. Create or open the Supabase project.
+2. Install dependencies with `npm install`.
+3. Log in with `npm run db:login`.
+4. Link the repo with `npm run db:link`.
+5. Run `npm run db:push`.
+6. Verify RLS is enabled for all user tables.
 
 ## Seed content included
 - French language entry
