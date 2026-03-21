@@ -39,12 +39,33 @@ struct SplashView: View {
             appState.subscriptionState = try await dependencies.subscriptionService.fetchSubscriptionState()
 
             if appState.session != nil {
+                await hydrateOnboardingStateIfNeeded()
                 dependencies.analyticsService.track(.sessionRestored, properties: [:])
             }
         } catch {
             appState.session = nil
             appState.onboardingState = .empty
             appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
+        }
+    }
+
+    private func hydrateOnboardingStateIfNeeded() async {
+        if appState.onboardingState.isCompleted {
+            try? await dependencies.onboardingService.syncAuthenticatedState(appState.onboardingState)
+            return
+        }
+
+        guard let profile = try? await dependencies.progressService.fetchProfile(),
+              profile.activeLanguage != nil else {
+            return
+        }
+
+        let restoredState = OnboardingState.completed(from: profile)
+        do {
+            try dependencies.onboardingService.saveOnboardingState(restoredState)
+            appState.onboardingState = restoredState
+        } catch {
+            dependencies.crashService.capture(error, context: ["feature": "bootstrap_onboarding_restore"])
         }
     }
 }

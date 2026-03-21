@@ -49,6 +49,7 @@
 		4B2B05ADFCD3C2874766F3DB /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA74D2A3094090B3288813F /* AppState.swift */; };
 		4B2BDE3DEA715B0595F72C6A /* LDCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED70C264681FF21C841AF42 /* LDCard.swift */; };
 		4B52938CCBE0FFA6DB0893B0 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73A881FA579A926CA46BB19 /* UserProfile.swift */; };
+		535934B81533B3E53783882D /* SupabaseDataMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44D2A818F9CFC93086A3313 /* SupabaseDataMappingTests.swift */; };
 		58C3945B5CE14CAA515A6451 /* LDListRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A565A62CA7B85A7A140D70 /* LDListRow.swift */; };
 		59CD7F65ED0B5113469E4CAE /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7835DCF21E26A6678B87A15F /* ProfileViewModel.swift */; };
 		5A3C57171C9319015580B8C7 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C291B5B8042AAC3D8F64F9 /* AppEnvironment.swift */; };
@@ -70,6 +71,7 @@
 		7276FC6BD05821C5C847B4FC /* TestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9EED4D9E67691D8D047D3B4 /* TestSupport.swift */; };
 		732CC407751DDDDB5948707A /* SettingsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6BFE720CC7741A75AC5AAA /* SettingsViewModelTests.swift */; };
 		74143F6F6AD77DD1209BE5FC /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FAE520CD5871C0B933F705 /* APIClient.swift */; };
+		757D4C20BED1CCEEC385C271 /* SupabaseOnboardingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDDBA68C8FC82F73EDF8F927 /* SupabaseOnboardingService.swift */; };
 		796500786B3C649BE88AB749 /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A7095B9FDF33E3A51FD561 /* SampleData.swift */; };
 		7C9F77F52F656815DF76E7C8 /* OnboardingServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB3095FF5EFF7964209D09 /* OnboardingServiceProtocol.swift */; };
 		7CD5183537718043DBCF608C /* CrashReportingServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4C01F73468348095B20D83 /* CrashReportingServiceProtocol.swift */; };
@@ -98,6 +100,7 @@
 		B907E9ABB33C69D3E6F328C4 /* AccountStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5029FB5C30A1962FA7CF21 /* AccountStepView.swift */; };
 		B9F610F7B88869A3E0D5BFA9 /* LinguaDailyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C96D09FE19C263C54CFB86 /* LinguaDailyApp.swift */; };
 		BB161CA37CB021219BBBBCD0 /* PushRegistrationServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 442F95CECA91F84F031D5F09 /* PushRegistrationServiceProtocol.swift */; };
+		BC4113DFE0A92DA027233771 /* SupabaseProgressService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDBEF5F5A4CC5AC92A46190 /* SupabaseProgressService.swift */; };
 		C5834A12DA80D6DBFFB7CC46 /* StubOnboardingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDE97B310FA50B98EA3E96FF /* StubOnboardingService.swift */; };
 		C78401CFC9BBF9FB77C21F8B /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 688B6CD86262C887BF27E3C6 /* AppError.swift */; };
 		CE73CEDE76868E2EE266C583 /* AuthViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB0EC2A1699BB916E61A7058 /* AuthViewModelTests.swift */; };
@@ -138,6 +141,7 @@
 
 /* Begin PBXFileReference section */
 		0898D4C03D45C469A323192C /* CacheEntities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheEntities.swift; sourceTree = "<group>"; };
+		0FDBEF5F5A4CC5AC92A46190 /* SupabaseProgressService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseProgressService.swift; sourceTree = "<group>"; };
 		118ED64FE6A26B723382568E /* Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Archive.swift; sourceTree = "<group>"; };
 		17C02BFEA06B704415F60065 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		18F6B15E0148942E349A3057 /* StubProgressService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubProgressService.swift; sourceTree = "<group>"; };
@@ -204,6 +208,7 @@
 		9FA74D2A3094090B3288813F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		A0F25439D084A9DE95F30784 /* SentenceCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceCardView.swift; sourceTree = "<group>"; };
 		A43D597ED0C4243E73185DB6 /* DailyWordAssignerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyWordAssignerTests.swift; sourceTree = "<group>"; };
+		A44D2A818F9CFC93086A3313 /* SupabaseDataMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseDataMappingTests.swift; sourceTree = "<group>"; };
 		A538ACB07C999C05A624632C /* SupabaseAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthService.swift; sourceTree = "<group>"; };
 		A5B87E0F4C188F07E4C12F83 /* LDColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDColor.swift; sourceTree = "<group>"; };
 		A8621E6273BBAC26AD303932 /* PostHogAnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogAnalyticsService.swift; sourceTree = "<group>"; };
@@ -234,6 +239,7 @@
 		D6FAE520CD5871C0B933F705 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		D7792BF97F4F361AB759BFF5 /* ProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressView.swift; sourceTree = "<group>"; };
 		D7869D3CC9A7670EDB58F7E6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		DDDBA68C8FC82F73EDF8F927 /* SupabaseOnboardingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseOnboardingService.swift; sourceTree = "<group>"; };
 		DE4C3FFAF7DBB67FF97F643B /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		E53E6F0E0675A06904312C8F /* ArchiveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveViewModel.swift; sourceTree = "<group>"; };
 		E775205A6FE4C1599C4B0971 /* LDButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDButtonStyles.swift; sourceTree = "<group>"; };
@@ -293,6 +299,8 @@
 				C0CE64B9C36E97E3026F08DA /* SupabaseConfig.swift */,
 				564DFB68B4847C14AB2C4449 /* SupabaseDailyLessonService.swift */,
 				47143AEE84BB8E97EDC0687B /* SupabaseDTOs.swift */,
+				DDDBA68C8FC82F73EDF8F927 /* SupabaseOnboardingService.swift */,
+				0FDBEF5F5A4CC5AC92A46190 /* SupabaseProgressService.swift */,
 				46671A0F78B3AF359A34BADC /* SupabaseReviewService.swift */,
 				4E72AEB41A4503E826FBDA41 /* Stubs */,
 			);
@@ -620,6 +628,7 @@
 				EB1345D9CF843865FA445D79 /* ReviewViewModelTests.swift */,
 				BA6BFE720CC7741A75AC5AAA /* SettingsViewModelTests.swift */,
 				B99A73D021943189D064E1CE /* SupabaseAuthServiceTests.swift */,
+				A44D2A818F9CFC93086A3313 /* SupabaseDataMappingTests.swift */,
 				E9EED4D9E67691D8D047D3B4 /* TestSupport.swift */,
 			);
 			path = Tests;
@@ -736,6 +745,7 @@
 				FF507737B6B4D27FD8D95472 /* ReviewViewModelTests.swift in Sources */,
 				732CC407751DDDDB5948707A /* SettingsViewModelTests.swift in Sources */,
 				615B6B9C99360DC00441950A /* SupabaseAuthServiceTests.swift in Sources */,
+				535934B81533B3E53783882D /* SupabaseDataMappingTests.swift in Sources */,
 				7276FC6BD05821C5C847B4FC /* TestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -839,6 +849,8 @@
 				DBDD5CA124B84FB97E50C2F9 /* SupabaseConfig.swift in Sources */,
 				493DB8FCBC227DEAC8CEE483 /* SupabaseDTOs.swift in Sources */,
 				F6E698C8FAE4D9171D2FE4DE /* SupabaseDailyLessonService.swift in Sources */,
+				757D4C20BED1CCEEC385C271 /* SupabaseOnboardingService.swift in Sources */,
+				BC4113DFE0A92DA027233771 /* SupabaseProgressService.swift in Sources */,
 				99DECA7CDFAB21D366EEF29D /* SupabaseReviewService.swift in Sources */,
 				1C66B19FDA9CE7F14E9B02FB /* TodayView.swift in Sources */,
 				916BF123BB379EA08942D3BD /* TodayViewModel.swift in Sources */,

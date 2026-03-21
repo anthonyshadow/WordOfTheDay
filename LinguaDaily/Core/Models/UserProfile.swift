@@ -59,3 +59,17 @@ struct OnboardingState: Codable, Hashable {
         isCompleted: false
     )
 }
+
+extension OnboardingState {
+    static func completed(from profile: UserProfile) -> OnboardingState {
+        OnboardingState(
+            goal: profile.learningGoal,
+            language: profile.activeLanguage,
+            level: profile.level,
+            reminderTime: profile.reminderTime,
+            hasSeenNotificationEducation: true,
+            hasRequestedNotificationPermission: false,
+            isCompleted: true
+        )
+    }
+}

@@ -15,4 +15,6 @@ final class StubOnboardingService: OnboardingServiceProtocol {
     func saveOnboardingState(_ state: OnboardingState) throws {
         try store.set(state, for: key)
     }
+
+    func syncAuthenticatedState(_ state: OnboardingState) async throws {}
 }

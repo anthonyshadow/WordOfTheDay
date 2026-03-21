@@ -190,7 +190,7 @@ final class OnboardingViewModel: ObservableObject {
                 analytics.track(.authEmailLoginTapped, properties: [:])
                 session = try await authService.signIn(email: email, password: password)
             }
-            completeOnboarding(session: session)
+            await completeOnboarding(session: session)
         } catch {
             crashReporter.capture(error, context: ["feature": "onboarding_auth_email"])
             asyncPhase = .failure((error as? AppError)?.viewError ?? .generic)
@@ -202,7 +202,7 @@ final class OnboardingViewModel: ObservableObject {
         do {
             analytics.track(.authAppleTapped, properties: [:])
             let session = try await authService.signInWithApple()
-            completeOnboarding(session: session)
+            await completeOnboarding(session: session)
         } catch {
             crashReporter.capture(error, context: ["feature": "onboarding_auth_apple"])
             asyncPhase = .failure((error as? AppError)?.viewError ?? .generic)
@@ -214,16 +214,21 @@ final class OnboardingViewModel: ObservableObject {
         do {
             analytics.track(.authGoogleTapped, properties: [:])
             let session = try await authService.signInWithGoogle()
-            completeOnboarding(session: session)
+            await completeOnboarding(session: session)
         } catch {
             crashReporter.capture(error, context: ["feature": "onboarding_auth_google"])
             asyncPhase = .failure((error as? AppError)?.viewError ?? .generic)
         }
     }
 
-    private func completeOnboarding(session: AuthSession) {
+    private func completeOnboarding(session: AuthSession) async {
         onboardingState.isCompleted = true
         persistState()
+        do {
+            try await onboardingService.syncAuthenticatedState(onboardingState)
+        } catch {
+            crashReporter.capture(error, context: ["feature": "onboarding_sync"])
+        }
         appState.session = session
         appState.onboardingState = onboardingState
         analytics.track(.authSuccess, properties: [:])

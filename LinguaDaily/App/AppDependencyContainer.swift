@@ -30,14 +30,17 @@ final class AppDependencyContainer: ObservableObject {
 
         if let supabaseConfig = environment.supabaseConfig {
             self.authService = SupabaseAuthService(config: supabaseConfig)
+            self.onboardingService = SupabaseOnboardingService(config: supabaseConfig, store: keyValueStore)
+            self.dailyLessonService = SupabaseDailyLessonService(config: supabaseConfig)
+            self.progressService = SupabaseProgressService(config: supabaseConfig)
         } else {
             self.authService = StubAuthService()
+            self.onboardingService = StubOnboardingService(store: keyValueStore)
+            self.dailyLessonService = StubDailyLessonService()
+            self.progressService = StubProgressService()
         }
-        self.onboardingService = StubOnboardingService(store: keyValueStore)
-        self.dailyLessonService = StubDailyLessonService()
         self.reviewService = StubReviewService()
         self.archiveService = StubArchiveService()
-        self.progressService = StubProgressService()
         self.notificationService = StubNotificationService()
         self.subscriptionService = StubSubscriptionService()
         self.analyticsService = StubAnalyticsService()
