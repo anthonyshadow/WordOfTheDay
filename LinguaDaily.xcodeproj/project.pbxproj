@@ -10,6 +10,7 @@
 		00B2A91ED880EB1E08C06034 /* SystemAudioPlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ECC095DB41EEC8FC6295F4C /* SystemAudioPlayerService.swift */; };
 		00DA15CA0AC357519CDB2B90 /* ProgressServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FEE6B057E49BBA0E40A79C /* ProgressServiceProtocol.swift */; };
 		00EAB7FEF83B4016584A1952 /* ProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7792BF97F4F361AB759BFF5 /* ProgressView.swift */; };
+		047B57B0C87E2458E649B413 /* StubOnboardingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667CDAC36717C89C6B790546 /* StubOnboardingServiceTests.swift */; };
 		0771E8FE4E20EC8462FE0A59 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B09519854D3D5280EECEBE1E /* SettingsViewModel.swift */; };
 		08B1E590EAE8F149523E5A38 /* ArchiveServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD59312581AA8BEF5F9FD8D /* ArchiveServiceProtocol.swift */; };
 		0D4FD514150E756339FADC06 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 06A5E345DD50E9FE1F39E3D8 /* RevenueCat */; };
@@ -24,6 +25,7 @@
 		1C66B19FDA9CE7F14E9B02FB /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27A9CC21C0B2C6B4E387E8A /* TodayView.swift */; };
 		2005C46440F4F4C4F886CF33 /* LDTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9728678688D878BF47DAA693 /* LDTypography.swift */; };
 		21F1757F9C673012975AA585 /* LDElevation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3535B0BED7AEC14FD4225B0 /* LDElevation.swift */; };
+		22484C4ABBA9F7CA82DEF621 /* SentryCrashReportingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7ADDAEE208AB6958CE1AA37 /* SentryCrashReportingServiceTests.swift */; };
 		22C30D0BCD37C8C234BE47D5 /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28B4D72A1C47A791D1E7400 /* ReviewView.swift */; };
 		2443153EA12BD442AC36EC49 /* StubProgressService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18F6B15E0148942E349A3057 /* StubProgressService.swift */; };
 		274C8A39CB6B8166740CCB2D /* LDSearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02AB9192DD295834561AFE /* LDSearchField.swift */; };
@@ -88,7 +90,6 @@
 		916BF123BB379EA08942D3BD /* TodayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54291E7B0086ECE63293904 /* TodayViewModel.swift */; };
 		91993F37541F1919F51115BF /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4D520CDC158232B59A9179 /* OnboardingViewModel.swift */; };
 		91C521315B2F327C632AE240 /* DailyLesson.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4773CFF0F386D759FF4730D /* DailyLesson.swift */; };
-		9C7B1A222E7A4F6B8C9D0E12 /* SentryCrashReportingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C7B1A222E7A4F6B8C9D0E11 /* SentryCrashReportingServiceTests.swift */; };
 		93B419AC849654204B95BDDA /* LocalNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76ABEB6E4E5ABC73E53AD5CD /* LocalNotificationService.swift */; };
 		93D20718EF9643A5010DB16A /* ArchiveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53E6F0E0675A06904312C8F /* ArchiveViewModel.swift */; };
 		961E54C7C498EFDD50D69976 /* NotificationEducationStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFA32504598E9B57D4176A16 /* NotificationEducationStepView.swift */; };
@@ -190,6 +191,7 @@
 		6119634DEF49A717345C965B /* StubAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubAuthService.swift; sourceTree = "<group>"; };
 		61B2755BFB94244F55D3288F /* StubReviewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubReviewService.swift; sourceTree = "<group>"; };
 		64B9C47234CA6DFF408F3D79 /* LinguaDaily.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LinguaDaily.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		667CDAC36717C89C6B790546 /* StubOnboardingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubOnboardingServiceTests.swift; sourceTree = "<group>"; };
 		688B6CD86262C887BF27E3C6 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		6A6E904A67C0BF17EAC6C2A8 /* LanguageSelectionStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSelectionStepView.swift; sourceTree = "<group>"; };
 		6AD0E283155E3623ADECEA7E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -235,7 +237,6 @@
 		B99A73D021943189D064E1CE /* SupabaseAuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthServiceTests.swift; sourceTree = "<group>"; };
 		BA6BFE720CC7741A75AC5AAA /* SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModelTests.swift; sourceTree = "<group>"; };
 		BDE97B310FA50B98EA3E96FF /* StubOnboardingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubOnboardingService.swift; sourceTree = "<group>"; };
-		9C7B1A222E7A4F6B8C9D0E11 /* SentryCrashReportingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryCrashReportingServiceTests.swift; sourceTree = "<group>"; };
 		C0CE64B9C36E97E3026F08DA /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
 		C25A0AFDEF8A36FE9177E0BC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		C2C1793DD9E0E3102FF61B84 /* LDRadius.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDRadius.swift; sourceTree = "<group>"; };
@@ -258,6 +259,7 @@
 		DE4C3FFAF7DBB67FF97F643B /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		E53E6F0E0675A06904312C8F /* ArchiveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveViewModel.swift; sourceTree = "<group>"; };
 		E775205A6FE4C1599C4B0971 /* LDButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDButtonStyles.swift; sourceTree = "<group>"; };
+		E7ADDAEE208AB6958CE1AA37 /* SentryCrashReportingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryCrashReportingServiceTests.swift; sourceTree = "<group>"; };
 		E8268355092354D24B411C53 /* Review.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Review.swift; sourceTree = "<group>"; };
 		E9EED4D9E67691D8D047D3B4 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
 		EB1345D9CF843865FA445D79 /* ReviewViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewViewModelTests.swift; sourceTree = "<group>"; };
@@ -648,8 +650,9 @@
 				FEA186339BDEF954698A8B62 /* RevenueCatSubscriptionServiceTests.swift */,
 				B0D3CC46D46DB9A6E0CC4E85 /* ReviewSchedulerTests.swift */,
 				EB1345D9CF843865FA445D79 /* ReviewViewModelTests.swift */,
-				9C7B1A222E7A4F6B8C9D0E11 /* SentryCrashReportingServiceTests.swift */,
+				E7ADDAEE208AB6958CE1AA37 /* SentryCrashReportingServiceTests.swift */,
 				BA6BFE720CC7741A75AC5AAA /* SettingsViewModelTests.swift */,
+				667CDAC36717C89C6B790546 /* StubOnboardingServiceTests.swift */,
 				B99A73D021943189D064E1CE /* SupabaseAuthServiceTests.swift */,
 				A44D2A818F9CFC93086A3313 /* SupabaseDataMappingTests.swift */,
 				CB863CBA61F7377DF028EA90 /* SupabaseReviewArchiveMappingTests.swift */,
@@ -701,7 +704,7 @@
 			buildPhases = (
 				9EED7740E466EE55AB586C08 /* Sources */,
 				01BB4D888027D223ADE6DD66 /* Frameworks */,
-				97B4248C32DC47D7BC70853D /* Upload Debug Symbols to Sentry */,
+				39C169B2354911CFB7C234DB /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
@@ -757,6 +760,28 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		39C169B2354911CFB7C234DB /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(TARGET_NAME)",
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script is responsible for uploading debug symbols and source context for Sentry.\nif which sentry-cli >/dev/null; then\n  export SENTRY_ORG=anthonyshadow\n  export SENTRY_PROJECT=apple-ios\n  if [ -n \"$SENTRY_AUTH_TOKEN\" ]; then\n    export SENTRY_AUTH_TOKEN\n  fi\n  ERROR=$(sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" 2>&1 >/dev/null)\n  if [ ! $? -eq 0 ]; then\n    echo \"warning: sentry-cli - $ERROR\"\n  fi\nelse\n  echo \"warning: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		22D98E21451F9C2235055432 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -771,8 +796,9 @@
 				199CFB610483593B9A528E6A /* RevenueCatSubscriptionServiceTests.swift in Sources */,
 				3378DE76B6C084566F299545 /* ReviewSchedulerTests.swift in Sources */,
 				FF507737B6B4D27FD8D95472 /* ReviewViewModelTests.swift in Sources */,
-				9C7B1A222E7A4F6B8C9D0E12 /* SentryCrashReportingServiceTests.swift in Sources */,
+				22484C4ABBA9F7CA82DEF621 /* SentryCrashReportingServiceTests.swift in Sources */,
 				732CC407751DDDDB5948707A /* SettingsViewModelTests.swift in Sources */,
+				047B57B0C87E2458E649B413 /* StubOnboardingServiceTests.swift in Sources */,
 				615B6B9C99360DC00441950A /* SupabaseAuthServiceTests.swift in Sources */,
 				535934B81533B3E53783882D /* SupabaseDataMappingTests.swift in Sources */,
 				15745B8755D9F7118B446A4F /* SupabaseReviewArchiveMappingTests.swift in Sources */,
@@ -912,6 +938,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = LinguaDaily/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -919,8 +947,6 @@
 				);
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_USER_SCRIPT_SANDBOXING = "NO";
 			};
 			name = Release;
 		};
@@ -1019,6 +1045,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = LinguaDaily/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1026,8 +1054,6 @@
 				);
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_USER_SCRIPT_SANDBOXING = "NO";
 			};
 			name = Debug;
 		};
@@ -1197,38 +1223,6 @@
 			productName = PostHog;
 		};
 /* End XCSwiftPackageProductDependency section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		97B4248C32DC47D7BC70853D /* Upload Debug Symbols to Sentry */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script is responsible for uploading debug symbols and source context for Sentry.
-if which sentry-cli >/dev/null; then
-  export SENTRY_ORG=anthonyshadow
-  export SENTRY_PROJECT=apple-ios
-  if [ -n \"$SENTRY_AUTH_TOKEN\" ]; then
-    export SENTRY_AUTH_TOKEN
-  fi
-  ERROR=$(sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" 2>&1 >/dev/null)
-  if [ ! $? -eq 0 ]; then
-    echo \"warning: sentry-cli - $ERROR\"
-  fi
-else
-  echo \"warning: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases\"
-fi
-";
-			name = "Upload Debug Symbols to Sentry";
-		};
-/* End PBXShellScriptBuildPhase section */
 	};
 	rootObject = F8C773AEE0EDEA0661E04057 /* Project object */;
 }

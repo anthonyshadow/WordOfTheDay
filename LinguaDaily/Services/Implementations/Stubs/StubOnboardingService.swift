@@ -5,10 +5,12 @@ final class StubOnboardingService: OnboardingServiceProtocol {
     private let key = "linguadaily.onboarding.state"
     private let sampleLanguages: [Language] = [
         SampleData.french,
+        Language(id: UUID(), code: "de", name: "German", nativeName: "Deutsch", isActive: true),
         Language(id: UUID(), code: "es", name: "Spanish", nativeName: "Espanol", isActive: true),
-        Language(id: UUID(), code: "ja", name: "Japanese", nativeName: "Nihongo", isActive: true),
         Language(id: UUID(), code: "it", name: "Italian", nativeName: "Italiano", isActive: true),
-        Language(id: UUID(), code: "ko", name: "Korean", nativeName: "Hangukeo", isActive: true)
+        Language(id: UUID(), code: "ja", name: "Japanese", nativeName: "Nihongo", isActive: true),
+        Language(id: UUID(), code: "ko", name: "Korean", nativeName: "Hangukeo", isActive: true),
+        Language(id: UUID(), code: "zh", name: "Mandarin", nativeName: "Putonghua", isActive: true)
     ]
 
     init(store: LocalKeyValueStore) {

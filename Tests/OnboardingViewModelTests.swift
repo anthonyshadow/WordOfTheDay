@@ -98,6 +98,36 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(error.actionTitle, "Retry")
     }
 
+    func testFilteredLanguagesMatchesExpandedSeededLanguageNames() async {
+        let onboardingService = TestOnboardingService()
+        onboardingService.fetchAvailableLanguagesResult = .success([
+            Language(
+                id: UUID(uuidString: "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA")!,
+                code: "de",
+                name: "German",
+                nativeName: "Deutsch",
+                isActive: true
+            ),
+            Language(
+                id: UUID(uuidString: "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB")!,
+                code: "zh",
+                name: "Mandarin",
+                nativeName: "Putonghua",
+                isActive: true
+            ),
+            SampleData.french
+        ])
+        let viewModel = makeViewModel(onboardingService: onboardingService)
+
+        await viewModel.loadAvailableLanguagesIfNeeded()
+
+        viewModel.languageQuery = "Deutsch"
+        XCTAssertEqual(viewModel.filteredLanguages.map(\.code), ["de"])
+
+        viewModel.languageQuery = "Mandarin"
+        XCTAssertEqual(viewModel.filteredLanguages.map(\.code), ["zh"])
+    }
+
     func testSubmitEmailAuthIdentifiesSessionBeforeCompletionEvents() async {
         let onboardingService = TestOnboardingService()
         let analytics = TestAnalyticsService()
