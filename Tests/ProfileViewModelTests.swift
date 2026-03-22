@@ -134,14 +134,14 @@ final class ProfileViewModelTests: XCTestCase {
         progressService: TestProgressService = TestProgressService(),
         onboardingService: TestOnboardingService = TestOnboardingService(),
         analytics: TestAnalyticsService = TestAnalyticsService(),
-        appState: AppState = AppState()
+        appState: AppState? = nil
     ) -> ProfileViewModel {
         ProfileViewModel(
             progressService: progressService,
             onboardingService: onboardingService,
             analytics: analytics,
             crash: TestCrashReportingService(),
-            appState: appState
+            appState: appState ?? AppState()
         )
     }
 

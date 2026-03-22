@@ -177,6 +177,46 @@ struct LanguageAccentContainerDTO: Decodable {
     let word_audio: [WordAudioAccentValueDTO]
 }
 
+struct SavedTranslationDTO: Decodable {
+    let id: UUID
+    let input_mode: TranslationInputMode
+    let source_text: String
+    let translated_text: String
+    let source_language: String
+    let target_language: String
+    let is_saved: Bool
+    let is_favorited: Bool
+    let transcription_text: String?
+    let extracted_text: String?
+    let source_image_url: String?
+    let detection_confidence: Double?
+    let session_id: String?
+    let created_at: Date
+    let updated_at: Date
+}
+
+struct SavedTranslationInsertDTO: Encodable {
+    let id: UUID
+    let user_id: UUID
+    let input_mode: TranslationInputMode
+    let source_text: String
+    let translated_text: String
+    let source_language: String
+    let target_language: String
+    let is_saved: Bool
+    let is_favorited: Bool
+    let transcription_text: String?
+    let extracted_text: String?
+    let source_image_url: String?
+    let detection_confidence: Double?
+    let session_id: String?
+}
+
+struct SavedTranslationFavoriteUpdateDTO: Encodable {
+    let is_saved: Bool
+    let is_favorited: Bool
+}
+
 struct ReviewQueueInsertDTO: Encodable {
     let user_id: UUID
     let word_id: UUID
@@ -281,6 +321,28 @@ extension UserWordProgressWithWordDTO {
             next_review_at: next_review_at,
             learned_at: learned_at,
             last_reviewed_at: last_reviewed_at
+        )
+    }
+}
+
+extension SavedTranslationDTO {
+    func toModel() -> SavedTranslation {
+        SavedTranslation(
+            id: id,
+            inputMode: input_mode,
+            sourceText: source_text,
+            translatedText: translated_text,
+            sourceLanguage: source_language,
+            targetLanguage: target_language,
+            isSaved: is_saved,
+            isFavorited: is_favorited,
+            transcriptionText: transcription_text,
+            extractedText: extracted_text,
+            sourceImageURL: source_image_url.flatMap(URL.init(string:)),
+            detectionConfidence: detection_confidence,
+            sessionID: session_id,
+            createdAt: created_at,
+            updatedAt: updated_at
         )
     }
 }

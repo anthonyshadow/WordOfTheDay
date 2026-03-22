@@ -20,6 +20,7 @@ final class AppDependencyContainer: ObservableObject {
     let analyticsService: AnalyticsServiceProtocol
     let crashService: CrashReportingServiceProtocol
     let audioPlayerService: AudioPlayerServiceProtocol
+    let translationService: TranslationServiceProtocol
 
     init(
         modelContext: ModelContext,
@@ -46,6 +47,7 @@ final class AppDependencyContainer: ObservableObject {
             self.progressService = SupabaseProgressService(config: supabaseConfig)
             self.notificationService = notificationService
             self.pushRegistrationService = notificationService
+            self.translationService = SupabaseTranslationService(config: supabaseConfig)
         } else {
             let notificationService = StubNotificationService()
             self.authService = StubAuthService()
@@ -56,6 +58,7 @@ final class AppDependencyContainer: ObservableObject {
             self.progressService = StubProgressService()
             self.notificationService = notificationService
             self.pushRegistrationService = notificationService
+            self.translationService = StubTranslationService()
         }
         self.subscriptionService = RevenueCatSubscriptionService(
             apiKey: environment.revenueCatKey,

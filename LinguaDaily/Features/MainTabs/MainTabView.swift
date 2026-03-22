@@ -20,6 +20,23 @@ struct MainTabView: View {
             .tabItem { Label(MainTab.today.title, systemImage: MainTab.today.systemImage) }
             .tag(MainTab.today)
 
+            TranslateView(
+                viewModel: TranslateViewModel(
+                    onboardingService: dependencies.onboardingService,
+                    translationService: dependencies.translationService,
+                    analytics: dependencies.analyticsService,
+                    crash: dependencies.crashService,
+                    appState: appState
+                ),
+                savedLibraryViewModel: SavedTranslationsViewModel(
+                    translationService: dependencies.translationService,
+                    analytics: dependencies.analyticsService,
+                    crash: dependencies.crashService
+                )
+            )
+            .tabItem { Label(MainTab.translate.title, systemImage: MainTab.translate.systemImage) }
+            .tag(MainTab.translate)
+
             ReviewView(
                 viewModel: ReviewViewModel(
                     reviewService: dependencies.reviewService,

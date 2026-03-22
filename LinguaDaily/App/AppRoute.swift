@@ -2,6 +2,7 @@ import Foundation
 
 enum MainTab: Hashable {
     case today
+    case translate
     case review
     case words
     case progress
@@ -10,6 +11,7 @@ enum MainTab: Hashable {
     var title: String {
         switch self {
         case .today: return "Today"
+        case .translate: return "Translate"
         case .review: return "Review"
         case .words: return "Words"
         case .progress: return "Progress"
@@ -20,6 +22,7 @@ enum MainTab: Hashable {
     var systemImage: String {
         switch self {
         case .today: return "sun.max"
+        case .translate: return "globe"
         case .review: return "arrow.triangle.2.circlepath"
         case .words: return "books.vertical"
         case .progress: return "chart.bar"

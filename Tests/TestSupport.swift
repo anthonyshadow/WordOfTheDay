@@ -1,4 +1,5 @@
 import Foundation
+import Translation
 @testable import LinguaDaily
 
 struct TrackedAnalyticsEvent: Equatable {
@@ -266,6 +267,49 @@ final class TestReviewService: ReviewServiceProtocol {
     }
 }
 
+final class TestTranslationService: TranslationServiceProtocol {
+    var fetchResult: Result<[SavedTranslation], Error> = .success([])
+    var createResult: Result<SavedTranslation, Error> = .success(TestData.savedTranslation())
+    var updateResult: Result<SavedTranslation, Error> = .success(TestData.savedTranslation(isFavorited: true))
+    var deleteError: Error?
+
+    private(set) var fetchCallCount = 0
+    private(set) var createdDrafts: [(draft: TranslationDraft, isFavorited: Bool)] = []
+    private(set) var updateRequests: [(id: UUID, isFavorited: Bool)] = []
+    private(set) var deletedIDs: [UUID] = []
+
+    func fetchSavedTranslations() async throws -> [SavedTranslation] {
+        fetchCallCount += 1
+        return try fetchResult.get()
+    }
+
+    func createSavedTranslation(from draft: TranslationDraft, isFavorited: Bool) async throws -> SavedTranslation {
+        createdDrafts.append((draft, isFavorited))
+        return try createResult.get()
+    }
+
+    func updateSavedTranslation(id: UUID, isFavorited: Bool) async throws -> SavedTranslation {
+        updateRequests.append((id, isFavorited))
+        return try updateResult.get()
+    }
+
+    func deleteSavedTranslation(id: UUID) async throws {
+        deletedIDs.append(id)
+        if let deleteError {
+            throw deleteError
+        }
+    }
+}
+
+struct TestTranslationLanguageSupportProvider: TranslationLanguageSupportProviding {
+    var isSimulatorEnvironment = false
+    var languages: [Locale.Language] = []
+
+    func supportedLanguages() async -> [Locale.Language] {
+        languages
+    }
+}
+
 enum TestData {
     static func session(email: String = "tester@example.com") -> AuthSession {
         AuthSession(
@@ -299,6 +343,55 @@ enum TestData {
                 ReviewOption(id: otherOptionID, text: "Goodbye", isCorrect: false)
             ],
             correctMeaning: "Hello"
+        )
+    }
+
+    static func translationDraft(
+        sourceText: String = "Hello",
+        translatedText: String = "Bonjour",
+        sourceLanguage: String = "en",
+        targetLanguage: String = "fr",
+        sessionID: String? = "session-1"
+    ) -> TranslationDraft {
+        TranslationDraft(
+            inputMode: .text,
+            sourceText: sourceText,
+            translatedText: translatedText,
+            sourceLanguage: sourceLanguage,
+            targetLanguage: targetLanguage,
+            transcriptionText: nil,
+            extractedText: nil,
+            sourceImageURL: nil,
+            detectionConfidence: nil,
+            sessionID: sessionID
+        )
+    }
+
+    static func savedTranslation(
+        id: UUID = UUID(uuidString: "12121212-3434-5656-7878-909090909090")!,
+        sourceText: String = "Hello",
+        translatedText: String = "Bonjour",
+        sourceLanguage: String = "en",
+        targetLanguage: String = "fr",
+        isFavorited: Bool = false,
+        createdAt: Date = Date(timeIntervalSince1970: 1_700_100_000)
+    ) -> SavedTranslation {
+        SavedTranslation(
+            id: id,
+            inputMode: .text,
+            sourceText: sourceText,
+            translatedText: translatedText,
+            sourceLanguage: sourceLanguage,
+            targetLanguage: targetLanguage,
+            isSaved: true,
+            isFavorited: isFavorited,
+            transcriptionText: nil,
+            extractedText: nil,
+            sourceImageURL: nil,
+            detectionConfidence: nil,
+            sessionID: "session-1",
+            createdAt: createdAt,
+            updatedAt: createdAt
         )
     }
 }
