@@ -46,6 +46,7 @@ final class OnboardingViewModel: ObservableObject {
     @Published var languagePhase: AsyncPhase<[Language]> = .idle
     @Published var languageQuery = ""
 
+    @Published var fullName = ""
     @Published var email = ""
     @Published var password = ""
     @Published var isCreatingAccount = true
@@ -53,6 +54,7 @@ final class OnboardingViewModel: ObservableObject {
 
     private let onboardingService: OnboardingServiceProtocol
     private let authService: AuthServiceProtocol
+    private let progressService: ProgressServiceProtocol
     private let notificationService: NotificationServiceProtocol
     private let analytics: AnalyticsServiceProtocol
     private let crashReporter: CrashReportingServiceProtocol
@@ -61,6 +63,7 @@ final class OnboardingViewModel: ObservableObject {
     init(
         onboardingService: OnboardingServiceProtocol,
         authService: AuthServiceProtocol,
+        progressService: ProgressServiceProtocol,
         notificationService: NotificationServiceProtocol,
         analytics: AnalyticsServiceProtocol,
         crashReporter: CrashReportingServiceProtocol,
@@ -68,6 +71,7 @@ final class OnboardingViewModel: ObservableObject {
     ) {
         self.onboardingService = onboardingService
         self.authService = authService
+        self.progressService = progressService
         self.notificationService = notificationService
         self.analytics = analytics
         self.crashReporter = crashReporter
@@ -96,7 +100,9 @@ final class OnboardingViewModel: ObservableObject {
         case .notifications:
             return true
         case .account:
-            return !email.isEmpty && password.count >= 6
+            return !email.isEmpty
+                && password.count >= 6
+                && (!isCreatingAccount || !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
 
@@ -191,12 +197,17 @@ final class OnboardingViewModel: ObservableObject {
             let session: AuthSession
             if isCreatingAccount {
                 analytics.track(.authEmailSignupTapped, properties: [:])
-                session = try await authService.signUp(email: email, password: password)
+                session = try await authService.signUp(
+                    email: email,
+                    password: password,
+                    displayName: fullName
+                )
+                await completeSignup(session: session)
             } else {
                 analytics.track(.authEmailLoginTapped, properties: [:])
                 session = try await authService.signIn(email: email, password: password)
+                await completeLogin(session: session)
             }
-            await completeOnboarding(session: session)
         } catch {
             crashReporter.capture(error, context: ["feature": "onboarding_auth_email"])
             asyncPhase = .failure((error as? AppError)?.viewError ?? .generic)
@@ -208,7 +219,7 @@ final class OnboardingViewModel: ObservableObject {
         do {
             analytics.track(.authAppleTapped, properties: [:])
             let session = try await authService.signInWithApple()
-            await completeOnboarding(session: session)
+            await completeSignup(session: session)
         } catch {
             crashReporter.capture(error, context: ["feature": "onboarding_auth_apple"])
             asyncPhase = .failure((error as? AppError)?.viewError ?? .generic)
@@ -220,14 +231,14 @@ final class OnboardingViewModel: ObservableObject {
         do {
             analytics.track(.authGoogleTapped, properties: [:])
             let session = try await authService.signInWithGoogle()
-            await completeOnboarding(session: session)
+            await completeSignup(session: session)
         } catch {
             crashReporter.capture(error, context: ["feature": "onboarding_auth_google"])
             asyncPhase = .failure((error as? AppError)?.viewError ?? .generic)
         }
     }
 
-    private func completeOnboarding(session: AuthSession) async {
+    private func completeSignup(session: AuthSession) async {
         onboardingState.isCompleted = true
         persistState()
         do {
@@ -246,6 +257,31 @@ final class OnboardingViewModel: ObservableObject {
             "goal": onboardingState.goal?.rawValue ?? "unknown"
         ])
         asyncPhase = .success(())
+    }
+
+    private func completeLogin(session: AuthSession) async {
+        appState.session = session
+        crashReporter.setUser(session)
+        analytics.identify(session)
+
+        if let restoredState = await restoreAuthenticatedOnboardingState() {
+            onboardingState = restoredState
+            persistState()
+        } else {
+            appState.onboardingState = onboardingState
+        }
+
+        analytics.track(.authSuccess, properties: [:])
+        asyncPhase = .success(())
+    }
+
+    private func restoreAuthenticatedOnboardingState() async -> OnboardingState? {
+        guard let profile = try? await progressService.fetchProfile(),
+              profile.activeLanguage != nil else {
+            return nil
+        }
+
+        return OnboardingState.completed(from: profile)
     }
 
     private var hasValidLanguageSelection: Bool {

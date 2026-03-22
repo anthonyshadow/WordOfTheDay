@@ -130,23 +130,27 @@ final class OnboardingViewModelTests: XCTestCase {
 
     func testSubmitEmailAuthIdentifiesSessionBeforeCompletionEvents() async {
         let onboardingService = TestOnboardingService()
+        let progressService = TestProgressService()
         let analytics = TestAnalyticsService()
         let crash = TestCrashReportingService()
         let appState = AppState()
         let viewModel = makeViewModel(
             onboardingService: onboardingService,
+            progressService: progressService,
             analytics: analytics,
             crash: crash,
             appState: appState
         )
         viewModel.email = "signup@example.com"
         viewModel.password = "secret1"
+        viewModel.fullName = "Taylor Example"
 
         await viewModel.submitEmailAuth()
 
         XCTAssertEqual(appState.session, TestData.session(email: "signup@example.com"))
         XCTAssertEqual(crash.userSessions, [TestData.session(email: "signup@example.com")])
         XCTAssertEqual(analytics.identifiedSessions, [TestData.session(email: "signup@example.com")])
+        XCTAssertEqual(onboardingService.syncedStates.count, 1)
         XCTAssertEqual(analytics.events.map(\.event), [
             .onboardingStarted,
             .authViewOpened,
@@ -157,9 +161,87 @@ final class OnboardingViewModelTests: XCTestCase {
         ])
     }
 
+    func testSubmitEmailLoginRestoresRemoteProfileWithoutSignupEvents() async {
+        let onboardingService = TestOnboardingService()
+        let progressService = TestProgressService()
+        progressService.profileResult = .success(
+            UserProfile(
+                id: UUID(uuidString: "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA")!,
+                email: "returning@example.com",
+                displayName: "Returning User",
+                activeLanguage: Language(
+                    id: UUID(uuidString: "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB")!,
+                    code: "ja",
+                    name: "Japanese",
+                    nativeName: "Nihongo",
+                    isActive: true
+                ),
+                learningGoal: .culture,
+                level: .intermediate,
+                reminderTime: Date(timeIntervalSince1970: 1_700_030_000),
+                timezoneIdentifier: "Asia/Tokyo",
+                joinedAt: Date(timeIntervalSince1970: 1_699_000_000)
+            )
+        )
+        let analytics = TestAnalyticsService()
+        let appState = AppState()
+        let viewModel = makeViewModel(
+            onboardingService: onboardingService,
+            progressService: progressService,
+            analytics: analytics,
+            appState: appState
+        )
+        viewModel.isCreatingAccount = false
+        viewModel.email = "returning@example.com"
+        viewModel.password = "secret1"
+
+        await viewModel.submitEmailAuth()
+
+        XCTAssertEqual(appState.session, TestData.session())
+        XCTAssertEqual(appState.onboardingState.language?.code, "ja")
+        XCTAssertTrue(appState.onboardingState.isCompleted)
+        XCTAssertTrue(onboardingService.syncedStates.isEmpty)
+        XCTAssertEqual(analytics.events.map(\.event), [
+            .onboardingStarted,
+            .authViewOpened,
+            .authEmailLoginTapped,
+            .authSuccess
+        ])
+    }
+
+    func testSubmitEmailLoginWithoutRemoteProfileKeepsOnboardingIncomplete() async {
+        let onboardingService = TestOnboardingService()
+        let progressService = TestProgressService()
+        progressService.profileResult = .failure(AppError.network("Profile missing."))
+        let analytics = TestAnalyticsService()
+        let appState = AppState()
+        let viewModel = makeViewModel(
+            onboardingService: onboardingService,
+            progressService: progressService,
+            analytics: analytics,
+            appState: appState
+        )
+        viewModel.isCreatingAccount = false
+        viewModel.email = "fresh@example.com"
+        viewModel.password = "secret1"
+
+        await viewModel.submitEmailAuth()
+
+        XCTAssertEqual(appState.session, TestData.session())
+        XCTAssertFalse(appState.onboardingState.isCompleted)
+        XCTAssertTrue(onboardingService.syncedStates.isEmpty)
+        XCTAssertEqual(analytics.events.map(\.event), [
+            .onboardingStarted,
+            .authViewOpened,
+            .authEmailLoginTapped,
+            .authSuccess
+        ])
+    }
+
     private func makeViewModel(
         onboardingService: TestOnboardingService = TestOnboardingService(),
         auth: TestAuthService = TestAuthService(),
+        progressService: TestProgressService = TestProgressService(),
         notificationService: TestNotificationService = TestNotificationService(),
         analytics: TestAnalyticsService = TestAnalyticsService(),
         crash: TestCrashReportingService = TestCrashReportingService(),
@@ -168,6 +250,7 @@ final class OnboardingViewModelTests: XCTestCase {
         OnboardingViewModel(
             onboardingService: onboardingService,
             authService: auth,
+            progressService: progressService,
             notificationService: notificationService,
             analytics: analytics,
             crashReporter: crash,

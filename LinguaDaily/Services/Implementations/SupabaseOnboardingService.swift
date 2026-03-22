@@ -40,12 +40,14 @@ final class SupabaseOnboardingService: OnboardingServiceProtocol {
             let user = session.user
             let timezone = TimeZone.current.identifier
             let languageID = try await resolveLanguageID(for: state.language?.code)
+            let displayName = Self.resolvedDisplayName(from: user)
 
             if let profilePayload = Self.makeProfileUpsert(
                 userID: user.id,
                 email: user.email ?? "",
                 state: state,
                 languageID: languageID,
+                displayName: displayName,
                 timezone: timezone
             ) {
                 try await client
@@ -103,6 +105,7 @@ final class SupabaseOnboardingService: OnboardingServiceProtocol {
         email: String,
         state: OnboardingState,
         languageID: UUID?,
+        displayName: String?,
         timezone: String,
         now: Date = .now
     ) -> OnboardingProfileUpsertDTO? {
@@ -110,6 +113,7 @@ final class SupabaseOnboardingService: OnboardingServiceProtocol {
             || state.level != nil
             || state.reminderTime != nil
             || languageID != nil
+            || !(displayName?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
 
         guard hasMeaningfulSelections else {
             return nil
@@ -118,6 +122,7 @@ final class SupabaseOnboardingService: OnboardingServiceProtocol {
         return OnboardingProfileUpsertDTO(
             id: userID,
             email: email,
+            display_name: displayName,
             learning_goal: state.goal,
             active_language_id: languageID,
             level: state.level,
@@ -143,11 +148,22 @@ final class SupabaseOnboardingService: OnboardingServiceProtocol {
             timezone: timezone
         )
     }
+
+    private static func resolvedDisplayName(from user: User) -> String? {
+        for key in ["display_name", "full_name", "name"] {
+            if let value = user.userMetadata[key]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !value.isEmpty {
+                return value
+            }
+        }
+        return nil
+    }
 }
 
 struct OnboardingProfileUpsertDTO: Encodable {
     let id: UUID
     let email: String
+    let display_name: String?
     let learning_goal: LearningGoal?
     let active_language_id: UUID?
     let level: LearningLevel?

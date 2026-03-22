@@ -28,16 +28,23 @@ final class SupabaseAuthServiceTests: XCTestCase {
         }
     }
 
-    func testSignUpIncludesTimezoneMetadata() async throws {
+    func testSignUpIncludesTimezoneAndDisplayNameMetadata() async throws {
         let client = MockSupabaseAuthClient()
         client.signUpResult = .success(TestData.session(email: "signup@example.com"))
         let service = SupabaseAuthService(client: client)
 
-        let session = try await service.signUp(email: "signup@example.com", password: "secret1")
+        let session = try await service.signUp(
+            email: "signup@example.com",
+            password: "secret1",
+            displayName: "Taylor Example"
+        )
 
         XCTAssertEqual(session.email, "signup@example.com")
         XCTAssertEqual(client.signUpCalls.count, 1)
         XCTAssertEqual(client.signUpCalls.first?.metadata["timezone"]?.stringValue, TimeZone.current.identifier)
+        XCTAssertEqual(client.signUpCalls.first?.metadata["display_name"]?.stringValue, "Taylor Example")
+        XCTAssertEqual(client.signUpCalls.first?.metadata["full_name"]?.stringValue, "Taylor Example")
+        XCTAssertEqual(client.signUpCalls.first?.metadata["name"]?.stringValue, "Taylor Example")
     }
 
     func testSignInMapsUnderlyingErrorsToAppAuthError() async {

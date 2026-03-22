@@ -37,14 +37,14 @@ final class SupabaseAuthService: AuthServiceProtocol {
         }
     }
 
-    func signUp(email: String, password: String) async throws -> AuthSession {
+    func signUp(email: String, password: String, displayName: String?) async throws -> AuthSession {
         try validate(email: email, password: password)
 
         do {
             return try await client.signUp(
                 email: email,
                 password: password,
-                metadata: signupMetadata()
+                metadata: signupMetadata(displayName: displayName)
             )
         } catch {
             throw normalize(error)
@@ -73,8 +73,14 @@ final class SupabaseAuthService: AuthServiceProtocol {
         }
     }
 
-    private func signupMetadata() -> [String: AnyJSON] {
-        ["timezone": .string(TimeZone.current.identifier)]
+    private func signupMetadata(displayName: String?) -> [String: AnyJSON] {
+        var metadata: [String: AnyJSON] = ["timezone": .string(TimeZone.current.identifier)]
+        if let displayName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines), !displayName.isEmpty {
+            metadata["display_name"] = .string(displayName)
+            metadata["full_name"] = .string(displayName)
+            metadata["name"] = .string(displayName)
+        }
+        return metadata
     }
 
     private func normalize(_ error: Error) -> AppError {

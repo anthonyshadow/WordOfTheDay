@@ -3,6 +3,7 @@ import Combine
 
 @MainActor
 final class AuthViewModel: ObservableObject {
+    @Published var fullName = ""
     @Published var email = ""
     @Published var password = ""
     @Published var isSignup = false
@@ -25,7 +26,9 @@ final class AuthViewModel: ObservableObject {
     }
 
     var isValid: Bool {
-        email.contains("@") && password.count >= 6
+        email.contains("@")
+            && password.count >= 6
+            && (!isSignup || !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
 
     func submitEmail() async {
@@ -34,7 +37,11 @@ final class AuthViewModel: ObservableObject {
             let session: AuthSession
             if isSignup {
                 analytics.track(.authEmailSignupTapped, properties: [:])
-                session = try await authService.signUp(email: email, password: password)
+                session = try await authService.signUp(
+                    email: email,
+                    password: password,
+                    displayName: fullName
+                )
             } else {
                 analytics.track(.authEmailLoginTapped, properties: [:])
                 session = try await authService.signIn(email: email, password: password)

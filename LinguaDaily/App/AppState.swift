@@ -25,4 +25,12 @@ final class AppState: ObservableObject {
     func resetNavigation() {
         path.removeAll()
     }
+
+    func resetForSignedOutUser() {
+        session = nil
+        onboardingState = .empty
+        selectedTab = .today
+        subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
+        resetNavigation()
+    }
 }

@@ -65,22 +65,25 @@ final class TodayViewModel: ObservableObject {
         guard case let .success(lesson) = phase else {
             return
         }
-        guard let first = lesson.word.audio.first else {
-            audioError = ViewError(
-                title: "Audio unavailable offline",
-                message: "Reconnect and try playing pronunciation again.",
-                actionTitle: "Dismiss"
-            )
-            return
+        if let first = lesson.word.audio.first {
+            do {
+                try await audioPlayer.play(url: first.url)
+                analytics.track(.dailyWordPlayPronunciation, properties: ["word": lesson.word.lemma, "source": "remote"])
+                analytics.track(.pronunciationPlayed, properties: ["word": lesson.word.lemma, "source": "remote"])
+                audioError = nil
+                return
+            } catch {
+                crash.capture(error, context: ["feature": "play_pronunciation_remote"])
+            }
         }
 
         do {
-            try await audioPlayer.play(url: first.url)
-            analytics.track(.dailyWordPlayPronunciation, properties: ["word": lesson.word.lemma])
-            analytics.track(.pronunciationPlayed, properties: ["word": lesson.word.lemma])
+            try await audioPlayer.speak(text: lesson.word.lemma, languageCode: lesson.word.languageCode)
+            analytics.track(.dailyWordPlayPronunciation, properties: ["word": lesson.word.lemma, "source": "tts"])
+            analytics.track(.pronunciationPlayed, properties: ["word": lesson.word.lemma, "source": "tts"])
             audioError = nil
         } catch {
-            crash.capture(error, context: ["feature": "play_pronunciation"])
+            crash.capture(error, context: ["feature": "play_pronunciation_tts"])
             audioError = ViewError(
                 title: "Audio load failed",
                 message: "Please try again in a moment.",

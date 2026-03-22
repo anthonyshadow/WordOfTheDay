@@ -45,21 +45,33 @@ final class SettingsViewModelTests: XCTestCase {
 
     func testLogOutClearsSessionAndNavigation() async {
         let auth = TestAuthService()
+        let onboardingService = TestOnboardingService()
         let analytics = TestAnalyticsService()
         let crash = TestCrashReportingService()
         let appState = AppState()
         appState.session = TestData.session()
+        appState.onboardingState = OnboardingState.completed(from: SampleData.profile)
         appState.subscriptionState = SubscriptionState(tier: .premium, isTrial: false, expiresAt: nil)
+        appState.selectedTab = .profile
         appState.path = [.settings, .paywall]
-        let viewModel = makeViewModel(auth: auth, analytics: analytics, crash: crash, appState: appState)
+        let viewModel = makeViewModel(
+            auth: auth,
+            onboardingService: onboardingService,
+            analytics: analytics,
+            crash: crash,
+            appState: appState
+        )
 
         await viewModel.logOut()
 
         XCTAssertEqual(auth.signOutCallCount, 1)
+        XCTAssertEqual(onboardingService.savedStates.last, .empty)
         XCTAssertEqual(analytics.resetCallCount, 1)
         XCTAssertEqual(crash.userSessions, [nil])
         XCTAssertNil(appState.session)
+        XCTAssertEqual(appState.onboardingState, .empty)
         XCTAssertEqual(appState.subscriptionState.tier, .free)
+        XCTAssertEqual(appState.selectedTab, .today)
         XCTAssertTrue(appState.path.isEmpty)
     }
 
@@ -90,6 +102,7 @@ final class SettingsViewModelTests: XCTestCase {
     private func makeViewModel(
         notificationService: TestNotificationService = TestNotificationService(),
         auth: TestAuthService = TestAuthService(),
+        onboardingService: TestOnboardingService = TestOnboardingService(),
         analytics: TestAnalyticsService = TestAnalyticsService(),
         crash: TestCrashReportingService = TestCrashReportingService(),
         appState: AppState? = nil
@@ -97,6 +110,7 @@ final class SettingsViewModelTests: XCTestCase {
         SettingsViewModel(
             notificationService: notificationService,
             authService: auth,
+            onboardingService: onboardingService,
             analytics: analytics,
             crash: crash,
             appState: appState ?? AppState()

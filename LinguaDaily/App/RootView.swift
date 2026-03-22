@@ -14,6 +14,7 @@ struct RootView: View {
                         viewModel: OnboardingViewModel(
                             onboardingService: dependencies.onboardingService,
                             authService: dependencies.authService,
+                            progressService: dependencies.progressService,
                             notificationService: dependencies.notificationService,
                             analytics: dependencies.analyticsService,
                             crashReporter: dependencies.crashService,
@@ -42,6 +43,7 @@ struct RootView: View {
                         viewModel: SettingsViewModel(
                             notificationService: dependencies.notificationService,
                             authService: dependencies.authService,
+                            onboardingService: dependencies.onboardingService,
                             analytics: dependencies.analyticsService,
                             crash: dependencies.crashService,
                             appState: appState

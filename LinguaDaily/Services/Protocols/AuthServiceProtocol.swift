@@ -9,7 +9,7 @@ struct AuthSession: Codable, Hashable {
 protocol AuthServiceProtocol {
     func restoreSession() async throws -> AuthSession?
     func signIn(email: String, password: String) async throws -> AuthSession
-    func signUp(email: String, password: String) async throws -> AuthSession
+    func signUp(email: String, password: String, displayName: String?) async throws -> AuthSession
     func signInWithApple() async throws -> AuthSession
     func signInWithGoogle() async throws -> AuthSession
     func signOut() async throws

@@ -73,7 +73,7 @@ final class TestSubscriptionService: SubscriptionServiceProtocol {
 
 final class TestAuthService: AuthServiceProtocol {
     private(set) var signInCalls: [(email: String, password: String)] = []
-    private(set) var signUpCalls: [(email: String, password: String)] = []
+    private(set) var signUpCalls: [(email: String, password: String, displayName: String?)] = []
     private(set) var signOutCallCount = 0
 
     var restoreSessionResult: AuthSession?
@@ -92,8 +92,8 @@ final class TestAuthService: AuthServiceProtocol {
         return try signInResult.get()
     }
 
-    func signUp(email: String, password: String) async throws -> AuthSession {
-        signUpCalls.append((email, password))
+    func signUp(email: String, password: String, displayName: String?) async throws -> AuthSession {
+        signUpCalls.append((email, password, displayName))
         return try signUpResult.get()
     }
 
@@ -190,6 +190,24 @@ final class TestOnboardingService: OnboardingServiceProtocol {
         if let syncError {
             throw syncError
         }
+    }
+}
+
+final class TestProgressService: ProgressServiceProtocol {
+    var progressResult: Result<ProgressSnapshot, Error> = .success(SampleData.progress)
+    var profileResult: Result<UserProfile, Error> = .success(SampleData.profile)
+
+    private(set) var fetchProgressCallCount = 0
+    private(set) var fetchProfileCallCount = 0
+
+    func fetchProgress() async throws -> ProgressSnapshot {
+        fetchProgressCallCount += 1
+        return try progressResult.get()
+    }
+
+    func fetchProfile() async throws -> UserProfile {
+        fetchProfileCallCount += 1
+        return try profileResult.get()
     }
 }
 

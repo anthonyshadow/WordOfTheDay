@@ -40,4 +40,21 @@ final class AppStateTests: XCTestCase {
 
         XCTAssertTrue(appState.path.isEmpty)
     }
+
+    func testResetForSignedOutUserClearsSessionOnboardingSubscriptionAndNavigation() {
+        let appState = AppState()
+        appState.session = TestData.session()
+        appState.onboardingState = OnboardingState.completed(from: SampleData.profile)
+        appState.subscriptionState = SubscriptionState(tier: .premium, isTrial: false, expiresAt: nil)
+        appState.selectedTab = .profile
+        appState.path = [.settings, .paywall]
+
+        appState.resetForSignedOutUser()
+
+        XCTAssertNil(appState.session)
+        XCTAssertEqual(appState.onboardingState, .empty)
+        XCTAssertEqual(appState.subscriptionState.tier, .free)
+        XCTAssertEqual(appState.selectedTab, .today)
+        XCTAssertTrue(appState.path.isEmpty)
+    }
 }

@@ -1,1 +1,4 @@
+// Shared helper for build settings that need literal // in URLs.
+FORWARD_SLASH = /
+
 #include? "Environment.xcconfig"

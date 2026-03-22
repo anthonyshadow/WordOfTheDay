@@ -30,6 +30,18 @@ struct AuthView: View {
 
                 LDCard {
                     VStack(alignment: .leading, spacing: LDSpacing.sm) {
+                        if viewModel.isSignup {
+                            Text("Full name")
+                                .font(LDTypography.overline())
+                                .foregroundStyle(LDColor.inkSecondary)
+                            TextField("Your name", text: $viewModel.fullName)
+                                .textInputAutocapitalization(.words)
+                                .autocorrectionDisabled()
+                                .font(LDTypography.body())
+
+                            Divider()
+                        }
+
                         Text("Email")
                             .font(LDTypography.overline())
                             .foregroundStyle(LDColor.inkSecondary)

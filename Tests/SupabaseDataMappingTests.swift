@@ -174,11 +174,13 @@ final class SupabaseDataMappingTests: XCTestCase {
             email: "alex.carter@example.com",
             state: state,
             languageID: languageID,
+            displayName: "Alex Carter",
             timezone: "America/Toronto",
             now: Date(timeIntervalSince1970: 1_720_000_000)
         )
 
         XCTAssertEqual(payload?.id, userID)
+        XCTAssertEqual(payload?.display_name, "Alex Carter")
         XCTAssertEqual(payload?.learning_goal, .travel)
         XCTAssertEqual(payload?.active_language_id, languageID)
         XCTAssertEqual(payload?.level, .beginner)

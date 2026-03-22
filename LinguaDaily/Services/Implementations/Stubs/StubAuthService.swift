@@ -16,7 +16,7 @@ final class StubAuthService: AuthServiceProtocol {
         return session
     }
 
-    func signUp(email: String, password: String) async throws -> AuthSession {
+    func signUp(email: String, password: String, displayName: String?) async throws -> AuthSession {
         try await signIn(email: email, password: password)
     }
 

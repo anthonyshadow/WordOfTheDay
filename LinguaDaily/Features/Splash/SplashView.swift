@@ -34,11 +34,18 @@ struct SplashView: View {
         }
 
         do {
-            appState.session = try await dependencies.authService.restoreSession()
-            appState.onboardingState = try dependencies.onboardingService.loadOnboardingState()
+            let restoredSession = try await dependencies.authService.restoreSession()
+            let persistedOnboardingState = try dependencies.onboardingService.loadOnboardingState()
+
+            appState.session = restoredSession
+            if restoredSession == nil && persistedOnboardingState.isCompleted {
+                try? dependencies.onboardingService.saveOnboardingState(.empty)
+                appState.onboardingState = .empty
+            } else {
+                appState.onboardingState = persistedOnboardingState
+            }
         } catch {
-            appState.session = nil
-            appState.onboardingState = .empty
+            appState.resetForSignedOutUser()
         }
         dependencies.crashService.setUser(appState.session)
 

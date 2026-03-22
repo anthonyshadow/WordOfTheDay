@@ -13,6 +13,12 @@ final class AuthViewModelTests: XCTestCase {
         viewModel.email = "user@example.com"
         viewModel.password = "123456"
         XCTAssertTrue(viewModel.isValid)
+
+        viewModel.isSignup = true
+        XCTAssertFalse(viewModel.isValid)
+
+        viewModel.fullName = "Taylor Example"
+        XCTAssertTrue(viewModel.isValid)
     }
 
     func testOnAppearTracksCurrentMode() {
@@ -52,6 +58,7 @@ final class AuthViewModelTests: XCTestCase {
         let appState = AppState()
         let viewModel = makeViewModel(auth: auth, appState: appState)
         viewModel.isSignup = true
+        viewModel.fullName = "Taylor Example"
         viewModel.email = "signup@example.com"
         viewModel.password = "secret1"
 
@@ -59,6 +66,7 @@ final class AuthViewModelTests: XCTestCase {
 
         XCTAssertEqual(auth.signInCalls.count, 0)
         XCTAssertEqual(auth.signUpCalls.count, 1)
+        XCTAssertEqual(auth.signUpCalls.first?.displayName, "Taylor Example")
         XCTAssertEqual(appState.session?.email, "signup@example.com")
         XCTAssertSuccess(viewModel.phase)
     }

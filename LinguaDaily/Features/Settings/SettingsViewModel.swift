@@ -9,6 +9,7 @@ final class SettingsViewModel: ObservableObject {
 
     private let notificationService: NotificationServiceProtocol
     private let authService: AuthServiceProtocol
+    private let onboardingService: OnboardingServiceProtocol
     private let analytics: AnalyticsServiceProtocol
     private let crash: CrashReportingServiceProtocol
     private let appState: AppState
@@ -16,12 +17,14 @@ final class SettingsViewModel: ObservableObject {
     init(
         notificationService: NotificationServiceProtocol,
         authService: AuthServiceProtocol,
+        onboardingService: OnboardingServiceProtocol,
         analytics: AnalyticsServiceProtocol,
         crash: CrashReportingServiceProtocol,
         appState: AppState
     ) {
         self.notificationService = notificationService
         self.authService = authService
+        self.onboardingService = onboardingService
         self.analytics = analytics
         self.crash = crash
         self.appState = appState
@@ -60,11 +63,10 @@ final class SettingsViewModel: ObservableObject {
     func logOut() async {
         do {
             try await authService.signOut()
+            try? onboardingService.saveOnboardingState(.empty)
             analytics.reset()
             crash.setUser(nil)
-            appState.session = nil
-            appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
-            appState.resetNavigation()
+            appState.resetForSignedOutUser()
         } catch {
             crash.capture(error, context: ["feature": "settings_logout"])
         }
@@ -74,11 +76,10 @@ final class SettingsViewModel: ObservableObject {
         // v1 stub: full backend delete-account workflow should remove auth user + profile + progress.
         do {
             try await authService.signOut()
+            try? onboardingService.saveOnboardingState(.empty)
             analytics.reset()
             crash.setUser(nil)
-            appState.session = nil
-            appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
-            appState.resetNavigation()
+            appState.resetForSignedOutUser()
         } catch {
             crash.capture(error, context: ["feature": "settings_delete_account"])
         }

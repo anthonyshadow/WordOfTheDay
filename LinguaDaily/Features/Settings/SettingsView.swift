@@ -143,6 +143,7 @@ struct SettingsView: View {
         viewModel: SettingsViewModel(
             notificationService: dependencies.notificationService,
             authService: dependencies.authService,
+            onboardingService: dependencies.onboardingService,
             analytics: dependencies.analyticsService,
             crash: dependencies.crashService,
             appState: dependencies.appState

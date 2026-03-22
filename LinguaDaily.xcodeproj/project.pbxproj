@@ -13,6 +13,7 @@
 		047B57B0C87E2458E649B413 /* StubOnboardingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667CDAC36717C89C6B790546 /* StubOnboardingServiceTests.swift */; };
 		0771E8FE4E20EC8462FE0A59 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B09519854D3D5280EECEBE1E /* SettingsViewModel.swift */; };
 		08B1E590EAE8F149523E5A38 /* ArchiveServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD59312581AA8BEF5F9FD8D /* ArchiveServiceProtocol.swift */; };
+		0B846D1CB7E59B673D1FAD4A /* TodayViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C2D513D4A712945BC9C08A8 /* TodayViewModelTests.swift */; };
 		0D4FD514150E756339FADC06 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 06A5E345DD50E9FE1F39E3D8 /* RevenueCat */; };
 		0EFBF84ACC517D1511AB7B32 /* Date+Lingua.swift in Sources */ = {isa = PBXBuildFile; fileRef = 431982AE9E93311EC515CE45 /* Date+Lingua.swift */; };
 		0F9689A2A7E5FA5C654E1721 /* SentenceCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F25439D084A9DE95F30784 /* SentenceCardView.swift */; };
@@ -150,6 +151,7 @@
 
 /* Begin PBXFileReference section */
 		0898D4C03D45C469A323192C /* CacheEntities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheEntities.swift; sourceTree = "<group>"; };
+		0C2D513D4A712945BC9C08A8 /* TodayViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModelTests.swift; sourceTree = "<group>"; };
 		0FDBEF5F5A4CC5AC92A46190 /* SupabaseProgressService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseProgressService.swift; sourceTree = "<group>"; };
 		118ED64FE6A26B723382568E /* Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Archive.swift; sourceTree = "<group>"; };
 		17C02BFEA06B704415F60065 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
@@ -657,6 +659,7 @@
 				A44D2A818F9CFC93086A3313 /* SupabaseDataMappingTests.swift */,
 				CB863CBA61F7377DF028EA90 /* SupabaseReviewArchiveMappingTests.swift */,
 				E9EED4D9E67691D8D047D3B4 /* TestSupport.swift */,
+				0C2D513D4A712945BC9C08A8 /* TodayViewModelTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -803,6 +806,7 @@
 				535934B81533B3E53783882D /* SupabaseDataMappingTests.swift in Sources */,
 				15745B8755D9F7118B446A4F /* SupabaseReviewArchiveMappingTests.swift in Sources */,
 				7276FC6BD05821C5C847B4FC /* TestSupport.swift in Sources */,
+				0B846D1CB7E59B673D1FAD4A /* TodayViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

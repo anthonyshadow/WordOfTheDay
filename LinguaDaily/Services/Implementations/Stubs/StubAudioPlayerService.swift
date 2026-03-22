@@ -6,4 +6,10 @@ final class StubAudioPlayerService: AudioPlayerServiceProtocol {
         print("[Audio] play \(url.absoluteString)")
         #endif
     }
+
+    func speak(text: String, languageCode: String) async throws {
+        #if DEBUG
+        print("[Audio] speak \(languageCode): \(text)")
+        #endif
+    }
 }

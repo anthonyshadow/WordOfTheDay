@@ -82,6 +82,7 @@ struct OnboardingFlowView: View {
         viewModel: OnboardingViewModel(
             onboardingService: dependencies.onboardingService,
             authService: dependencies.authService,
+            progressService: dependencies.progressService,
             notificationService: dependencies.notificationService,
             analytics: dependencies.analyticsService,
             crashReporter: dependencies.crashService,
