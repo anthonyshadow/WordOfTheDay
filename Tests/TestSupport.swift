@@ -1,5 +1,6 @@
 import Foundation
 import Translation
+import UIKit
 @testable import LinguaDaily
 
 struct TrackedAnalyticsEvent: Equatable {
@@ -354,6 +355,31 @@ final class TestVoiceTranslationProvider: VoiceTranslationProviding {
     }
 }
 
+final class TestCameraTranslationProvider: CameraTranslationProviding {
+    var isCameraAvailable = true
+    var permissionState: CameraTranslationPermissionState = .authorized
+    var extractResult: Result<CameraOCRResult, Error> = .success(
+        CameraOCRResult(
+            extractedText: "Bonjour",
+            detectedLanguageCode: "fr",
+            detectionConfidence: 0.91
+        )
+    )
+
+    private(set) var extractedImages: [UIImage] = []
+    private(set) var preferredLocaleIdentifiers: [String?] = []
+
+    func requestPermissionIfNeeded() async -> CameraTranslationPermissionState {
+        permissionState
+    }
+
+    func extractText(from image: UIImage, preferredLocaleIdentifier: String?) async throws -> CameraOCRResult {
+        extractedImages.append(image)
+        preferredLocaleIdentifiers.append(preferredLocaleIdentifier)
+        return try extractResult.get()
+    }
+}
+
 enum TestData {
     static func session(email: String = "tester@example.com") -> AuthSession {
         AuthSession(
@@ -395,18 +421,23 @@ enum TestData {
         translatedText: String = "Bonjour",
         sourceLanguage: String = "en",
         targetLanguage: String = "fr",
+        inputMode: TranslationInputMode = .text,
+        transcriptionText: String? = nil,
+        extractedText: String? = nil,
+        sourceImageURL: URL? = nil,
+        detectionConfidence: Double? = nil,
         sessionID: String? = "session-1"
     ) -> TranslationDraft {
         TranslationDraft(
-            inputMode: .text,
+            inputMode: inputMode,
             sourceText: sourceText,
             translatedText: translatedText,
             sourceLanguage: sourceLanguage,
             targetLanguage: targetLanguage,
-            transcriptionText: nil,
-            extractedText: nil,
-            sourceImageURL: nil,
-            detectionConfidence: nil,
+            transcriptionText: transcriptionText,
+            extractedText: extractedText,
+            sourceImageURL: sourceImageURL,
+            detectionConfidence: detectionConfidence,
             sessionID: sessionID
         )
     }
@@ -417,22 +448,27 @@ enum TestData {
         translatedText: String = "Bonjour",
         sourceLanguage: String = "en",
         targetLanguage: String = "fr",
+        inputMode: TranslationInputMode = .text,
         isFavorited: Bool = false,
+        transcriptionText: String? = nil,
+        extractedText: String? = nil,
+        sourceImageURL: URL? = nil,
+        detectionConfidence: Double? = nil,
         createdAt: Date = Date(timeIntervalSince1970: 1_700_100_000)
     ) -> SavedTranslation {
         SavedTranslation(
             id: id,
-            inputMode: .text,
+            inputMode: inputMode,
             sourceText: sourceText,
             translatedText: translatedText,
             sourceLanguage: sourceLanguage,
             targetLanguage: targetLanguage,
             isSaved: true,
             isFavorited: isFavorited,
-            transcriptionText: nil,
-            extractedText: nil,
-            sourceImageURL: nil,
-            detectionConfidence: nil,
+            transcriptionText: transcriptionText,
+            extractedText: extractedText,
+            sourceImageURL: sourceImageURL,
+            detectionConfidence: detectionConfidence,
             sessionID: "session-1",
             createdAt: createdAt,
             updatedAt: createdAt

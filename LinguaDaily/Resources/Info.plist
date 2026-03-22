@@ -58,6 +58,8 @@
     <string>$(SENTRY_DSN)</string>
     <key>GoogleClientID</key>
     <string>$(GOOGLE_CLIENT_ID)</string>
+    <key>NSCameraUsageDescription</key>
+    <string>LinguaDaily uses the camera to capture printed text for translation.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>LinguaDaily uses the microphone to capture spoken phrases for voice translation.</string>
     <key>NSSpeechRecognitionUsageDescription</key>

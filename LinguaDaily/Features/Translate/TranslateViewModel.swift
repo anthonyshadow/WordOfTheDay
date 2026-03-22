@@ -41,6 +41,12 @@ enum VoiceTranslationCaptureState: Equatable {
     case processing
 }
 
+enum CameraTranslationProcessingState: Equatable {
+    case idle
+    case requestingPermission
+    case processing
+}
+
 struct VoiceTranscriptionResult: Equatable {
     let transcript: String
     let detectedLanguageCode: String?
@@ -206,8 +212,14 @@ final class SystemVoiceTranslationProvider: VoiceTranslationProviding {
 
     private func requestMicrophonePermission() async -> Bool {
         await withCheckedContinuation { continuation in
-            AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                continuation.resume(returning: granted)
+            if #available(iOS 17.0, *) {
+                AVAudioApplication.requestRecordPermission { granted in
+                    continuation.resume(returning: granted)
+                }
+            } else {
+                AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                    continuation.resume(returning: granted)
+                }
             }
         }
     }
@@ -260,12 +272,14 @@ final class TranslateViewModel: ObservableObject {
             if oldValue == .voice {
                 Task { await cancelVoiceCapture() }
             }
-
             currentResult = nil
             clearTranslationError()
             if selectedInputMode != .voice {
                 liveVoiceTranscript = ""
                 voiceCaptureState = .idle
+            }
+            if selectedInputMode != .camera {
+                clearCameraCapture()
             }
         }
     }
@@ -297,6 +311,10 @@ final class TranslateViewModel: ObservableObject {
     @Published private(set) var translationConfiguration: TranslationSession.Configuration?
     @Published private(set) var voiceCaptureState: VoiceTranslationCaptureState = .idle
     @Published private(set) var liveVoiceTranscript = ""
+    @Published private(set) var cameraProcessingState: CameraTranslationProcessingState = .idle
+    @Published private(set) var capturedCameraImage: UIImage?
+    @Published private(set) var extractedCameraText = ""
+    @Published var isPresentingCameraCapture = false
     @Published var isPresentingSavedLibrary = false
 
     private let onboardingService: OnboardingServiceProtocol
@@ -306,8 +324,10 @@ final class TranslateViewModel: ObservableObject {
     private let appState: AppState
     private let translationLanguageSupport: TranslationLanguageSupportProviding
     private let voiceTranslationProvider: VoiceTranslationProviding
+    private let cameraTranslationProvider: CameraTranslationProviding
     private var supportedTranslationLanguages: [Locale.Language] = []
     private var errorAction: TranslateErrorAction = .clear
+    private var cameraDetectionConfidence: Double?
 
     init(
         onboardingService: OnboardingServiceProtocol,
@@ -316,7 +336,8 @@ final class TranslateViewModel: ObservableObject {
         crash: CrashReportingServiceProtocol,
         appState: AppState,
         translationLanguageSupport: TranslationLanguageSupportProviding = SystemTranslationLanguageSupportProvider(),
-        voiceTranslationProvider: VoiceTranslationProviding = SystemVoiceTranslationProvider()
+        voiceTranslationProvider: VoiceTranslationProviding = SystemVoiceTranslationProvider(),
+        cameraTranslationProvider: CameraTranslationProviding = SystemCameraTranslationProvider()
     ) {
         self.onboardingService = onboardingService
         self.translationService = translationService
@@ -325,6 +346,7 @@ final class TranslateViewModel: ObservableObject {
         self.appState = appState
         self.translationLanguageSupport = translationLanguageSupport
         self.voiceTranslationProvider = voiceTranslationProvider
+        self.cameraTranslationProvider = cameraTranslationProvider
     }
 
     var availableLanguages: [Language] {
@@ -352,6 +374,18 @@ final class TranslateViewModel: ObservableObject {
 
     var isProcessingVoiceCapture: Bool {
         voiceCaptureState == .requestingPermission || voiceCaptureState == .processing
+    }
+
+    var canStartCameraCapture: Bool {
+        targetLanguage != nil && !isTranslating && cameraProcessingState == .idle
+    }
+
+    var isProcessingCameraCapture: Bool {
+        cameraProcessingState == .requestingPermission || cameraProcessingState == .processing
+    }
+
+    var hasCapturedCameraImage: Bool {
+        capturedCameraImage != nil
     }
 
     var canSwapLanguages: Bool {
@@ -433,7 +467,13 @@ final class TranslateViewModel: ObservableObject {
                 detectionConfidence: nil
             )
         case .camera:
-            break
+            requestTranslation(
+                inputMode: .camera,
+                text: extractedCameraText,
+                transcriptionText: nil,
+                extractedText: extractedCameraText,
+                detectionConfidence: cameraDetectionConfidence
+            )
         }
     }
 
@@ -531,6 +571,77 @@ final class TranslateViewModel: ObservableObject {
         clearTranslationError()
     }
 
+    func startCameraCapture() async {
+        clearTranslationError()
+        currentResult = nil
+        cameraProcessingState = .requestingPermission
+
+        let permissionState = await cameraTranslationProvider.requestPermissionIfNeeded()
+        switch permissionState {
+        case .authorized:
+            cameraProcessingState = .idle
+            isPresentingCameraCapture = true
+        case .denied:
+            cameraProcessingState = .idle
+            presentError(
+                ViewError(
+                    title: "Camera access needed",
+                    message: "Allow camera access in Settings before starting camera translation.",
+                    actionTitle: "Open Settings"
+                ),
+                action: .openSettings
+            )
+        case .unavailable:
+            cameraProcessingState = .idle
+            presentError(cameraUnavailableError(), action: .clear)
+        }
+    }
+
+    func cancelCameraCapturePresentation() {
+        isPresentingCameraCapture = false
+    }
+
+    func handleCapturedCameraImage(_ image: UIImage) async {
+        isPresentingCameraCapture = false
+        clearTranslationError()
+        currentResult = nil
+        capturedCameraImage = image
+        extractedCameraText = ""
+        cameraDetectionConfidence = nil
+        cameraProcessingState = .processing
+
+        do {
+            let ocrResult = try await cameraTranslationProvider.extractText(
+                from: image,
+                preferredLocaleIdentifier: preferredCameraRecognitionLocaleIdentifier()
+            )
+            extractedCameraText = ocrResult.extractedText
+            cameraDetectionConfidence = ocrResult.detectionConfidence
+            cameraProcessingState = .idle
+
+            requestTranslation(
+                inputMode: .camera,
+                text: ocrResult.extractedText,
+                transcriptionText: nil,
+                extractedText: ocrResult.extractedText,
+                detectionConfidence: ocrResult.detectionConfidence
+            )
+        } catch {
+            cameraProcessingState = .idle
+            presentCameraProcessingError(error)
+        }
+    }
+
+    func clearCameraCapture() {
+        isPresentingCameraCapture = false
+        cameraProcessingState = .idle
+        capturedCameraImage = nil
+        extractedCameraText = ""
+        cameraDetectionConfidence = nil
+        currentResult = nil
+        clearTranslationError()
+    }
+
     private func requestTranslation(
         inputMode: TranslationInputMode,
         text: String,
@@ -549,7 +660,7 @@ final class TranslateViewModel: ObservableObject {
         let trimmedInput = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedInput.isEmpty else {
             presentError(
-                AppError.validation("Enter a word, phrase, or sentence to translate.").viewError,
+                emptyInputError(for: inputMode),
                 action: .clear
             )
             return
@@ -849,6 +960,8 @@ final class TranslateViewModel: ObservableObject {
             requestTranslation()
         case .retryVoiceCapture:
             Task { await startVoiceCapture() }
+        case .retryCameraCapture:
+            Task { await startCameraCapture() }
         case .openSettings:
             guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
                 clearTranslationError()
@@ -884,6 +997,17 @@ final class TranslateViewModel: ObservableObject {
         errorAction = .clear
     }
 
+    private func emptyInputError(for inputMode: TranslationInputMode) -> ViewError {
+        switch inputMode {
+        case .text:
+            return AppError.validation("Enter a word, phrase, or sentence to translate.").viewError
+        case .voice:
+            return AppError.validation("Record a word, phrase, or sentence to translate.").viewError
+        case .camera:
+            return AppError.validation("Capture an image with readable text to translate.").viewError
+        }
+    }
+
     private func translationAnalyticsProperties(
         sourceLanguage: String,
         targetLanguage: String,
@@ -901,7 +1025,23 @@ final class TranslateViewModel: ObservableObject {
         presentError(mappedError.viewError, action: mappedError.action)
     }
 
+    private func presentCameraProcessingError(_ error: Error) {
+        let mappedError = Self.mapCameraTranslationError(error)
+        if mappedError.shouldCapture {
+            crash.capture(error, context: ["feature": "translate_camera_ocr"])
+        }
+        presentError(mappedError.viewError, action: mappedError.action)
+    }
+
     private func preferredVoiceRecognizerLocaleIdentifier() -> String? {
+        if let manualSourceLanguage = sourceSelection.language {
+            return preferredLocaleIdentifier(for: manualSourceLanguage.code) ?? manualSourceLanguage.code
+        }
+
+        return Locale.preferredLanguages.first
+    }
+
+    private func preferredCameraRecognitionLocaleIdentifier() -> String? {
         if let manualSourceLanguage = sourceSelection.language {
             return preferredLocaleIdentifier(for: manualSourceLanguage.code) ?? manualSourceLanguage.code
         }
@@ -943,6 +1083,22 @@ final class TranslateViewModel: ObservableObject {
             title: "Translation unavailable",
             message: "We couldn't load the supported translation languages on this device yet. Please try again in a moment.",
             actionTitle: "Retry"
+        )
+    }
+
+    private func cameraUnavailableError() -> ViewError {
+        if cameraTranslationProvider.isCameraAvailable == false {
+            return ViewError(
+                title: "Camera requires a device",
+                message: "Camera translation needs a device with an available camera. Use a physical iPhone or iPad to capture text.",
+                actionTitle: "OK"
+            )
+        }
+
+        return ViewError(
+            title: "Camera unavailable",
+            message: "We couldn't access the camera on this device right now. Please try again.",
+            actionTitle: "OK"
         )
     }
 
@@ -1161,6 +1317,69 @@ final class TranslateViewModel: ObservableObject {
             reason: "voice_unexpected"
         )
     }
+
+    private static func mapCameraTranslationError(_ error: Error) -> MappedTranslationError {
+        if let cameraError = error as? CameraTranslationError {
+            switch cameraError {
+            case .permissionDenied:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "Camera access needed",
+                        message: "Allow camera access in Settings before starting camera translation.",
+                        actionTitle: "Open Settings"
+                    ),
+                    action: .openSettings,
+                    shouldCapture: false,
+                    reason: "camera_permission_denied"
+                )
+            case .cameraUnavailable:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "Camera unavailable",
+                        message: "We couldn't access the camera on this device right now. Please try again.",
+                        actionTitle: "OK"
+                    ),
+                    action: .clear,
+                    shouldCapture: false,
+                    reason: "camera_unavailable"
+                )
+            case .imageProcessingFailed:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "Camera translation unavailable",
+                        message: "We couldn't read text from that image. Try retaking the photo.",
+                        actionTitle: "Retake"
+                    ),
+                    action: .retryCameraCapture,
+                    shouldCapture: false,
+                    reason: "image_processing_failed"
+                )
+            case .noTextDetected:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "No text found",
+                        message: "Try retaking the photo with sharper focus, better lighting, or a closer frame.",
+                        actionTitle: "Retake"
+                    ),
+                    action: .retryCameraCapture,
+                    shouldCapture: false,
+                    reason: "no_text_detected"
+                )
+            }
+        }
+
+        let message = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        return MappedTranslationError(
+            viewError: ViewError(
+                title: "Camera translation unavailable",
+                message: message.isEmpty ? "We couldn't process that image. Please try again." : message,
+                actionTitle: "Retake"
+            ),
+            action: .retryCameraCapture,
+            shouldCapture: true,
+            reason: "camera_unexpected"
+        )
+    }
 }
 
 @MainActor
@@ -1361,6 +1580,7 @@ private enum TranslateErrorAction {
     case clear
     case retryTranslation
     case retryVoiceCapture
+    case retryCameraCapture
     case openSettings
 }
 

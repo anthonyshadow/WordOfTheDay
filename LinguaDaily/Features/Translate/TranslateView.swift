@@ -95,6 +95,19 @@ struct TranslateView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $viewModel.isPresentingCameraCapture) {
+            CameraCaptureView(
+                onCapture: { image in
+                    Task {
+                        await viewModel.handleCapturedCameraImage(image)
+                    }
+                },
+                onCancel: {
+                    viewModel.cancelCameraCapturePresentation()
+                }
+            )
+            .ignoresSafeArea()
+        }
         .translationTask(viewModel.translationConfiguration) { session in
             await viewModel.performTranslation(using: session)
         }
@@ -106,14 +119,10 @@ struct TranslateView: View {
     private var headerCard: some View {
         LDCard(background: AnyShapeStyle(LDColor.accent.opacity(0.12))) {
             VStack(alignment: .leading, spacing: LDSpacing.xs) {
-                Text(viewModel.selectedInputMode == .voice ? "Voice translation is live" : "Text translation is live")
+                Text(headerTitle)
                     .font(LDTypography.section())
                     .foregroundStyle(LDColor.inkPrimary)
-                Text(
-                    viewModel.selectedInputMode == .voice
-                        ? "Speak a phrase, let LinguaDaily transcribe it, and save the useful translations to your library."
-                        : "Translate a word, phrase, or sentence, then save the useful ones to your personal library."
-                )
+                Text(headerSubtitle)
                     .font(LDTypography.body())
                     .foregroundStyle(LDColor.inkSecondary)
             }
@@ -129,7 +138,7 @@ struct TranslateView: View {
                     .foregroundStyle(LDColor.inkPrimary)
 
                 HStack(spacing: LDSpacing.xs) {
-                    ForEach([TranslationInputMode.voice, .text], id: \.self) { mode in
+                    ForEach([TranslationInputMode.voice, .camera, .text], id: \.self) { mode in
                         LDFilterChip(title: mode.title, isActive: viewModel.selectedInputMode == mode) {
                             viewModel.selectedInputMode = mode
                         }
@@ -191,10 +200,10 @@ struct TranslateView: View {
         switch viewModel.selectedInputMode {
         case .voice:
             voiceInputCard
+        case .camera:
+            cameraInputCard
         case .text:
             inputCard
-        case .camera:
-            EmptyView()
         }
     }
 
@@ -311,6 +320,98 @@ struct TranslateView: View {
         }
     }
 
+    private var cameraInputCard: some View {
+        LDCard {
+            VStack(alignment: .leading, spacing: LDSpacing.md) {
+                HStack {
+                    Text("Camera")
+                        .font(LDTypography.section())
+                        .foregroundStyle(LDColor.inkPrimary)
+                    Spacer()
+                    if viewModel.hasCapturedCameraImage && !viewModel.isProcessingCameraCapture {
+                        Button("Clear") {
+                            viewModel.clearCameraCapture()
+                        }
+                        .font(LDTypography.caption())
+                        .foregroundStyle(LDColor.accent)
+                    }
+                }
+
+                Group {
+                    if let capturedCameraImage = viewModel.capturedCameraImage {
+                        Image(uiImage: capturedCameraImage)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        VStack(spacing: LDSpacing.xs) {
+                            Image(systemName: "camera.viewfinder")
+                                .font(.system(size: 28, weight: .semibold))
+                                .foregroundStyle(LDColor.accent)
+                            Text("Capture printed text to translate it into your selected language.")
+                                .font(LDTypography.body())
+                                .foregroundStyle(LDColor.inkSecondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(LDSpacing.lg)
+                    }
+                }
+                .frame(height: 220)
+                .frame(maxWidth: .infinity)
+                .background(LDColor.surfaceMuted)
+                .clipShape(RoundedRectangle(cornerRadius: LDRadius.md, style: .continuous))
+
+                Button {
+                    Task {
+                        await viewModel.startCameraCapture()
+                    }
+                } label: {
+                    HStack(spacing: LDSpacing.sm) {
+                        if viewModel.isProcessingCameraCapture {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Image(systemName: viewModel.hasCapturedCameraImage ? "camera.rotate.fill" : "camera.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                        }
+
+                        Text(cameraPrimaryActionTitle)
+                            .font(LDTypography.bodyBold())
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(LDPrimaryButtonStyle())
+                .disabled(!viewModel.canStartCameraCapture || viewModel.isProcessingCameraCapture)
+
+                VStack(alignment: .leading, spacing: LDSpacing.xs) {
+                    Text(cameraStatusTitle)
+                        .font(LDTypography.bodyBold())
+                        .foregroundStyle(LDColor.inkPrimary)
+                    Text(cameraStatusSubtitle)
+                        .font(LDTypography.body())
+                        .foregroundStyle(LDColor.inkSecondary)
+                }
+
+                if !viewModel.extractedCameraText.isEmpty {
+                    VStack(alignment: .leading, spacing: LDSpacing.xs) {
+                        Text("Extracted Text")
+                            .font(LDTypography.caption())
+                            .foregroundStyle(LDColor.inkSecondary)
+                        Text(viewModel.extractedCameraText)
+                            .font(LDTypography.body())
+                            .foregroundStyle(LDColor.inkPrimary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, LDSpacing.sm)
+                    .padding(.vertical, LDSpacing.sm)
+                    .background(LDColor.surfaceMuted)
+                    .clipShape(RoundedRectangle(cornerRadius: LDRadius.md, style: .continuous))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     private var translateButton: some View {
         Button {
             viewModel.requestTranslation()
@@ -333,16 +434,18 @@ struct TranslateView: View {
 
     @ViewBuilder
     private var resultSection: some View {
-        if viewModel.isTranslating || viewModel.isProcessingVoiceCapture {
-            LDLoadingStateView(title: viewModel.selectedInputMode == .voice ? "Translating speech" : "Translating text")
+        if viewModel.isProcessingCameraCapture {
+            LDLoadingStateView(title: "Reading text from image")
+        } else if viewModel.isTranslating || viewModel.isProcessingVoiceCapture {
+            LDLoadingStateView(title: translationLoadingTitle)
         } else if let result = viewModel.currentResult {
             LDCard {
                 VStack(alignment: .leading, spacing: LDSpacing.md) {
                     VStack(alignment: .leading, spacing: LDSpacing.xs) {
-                        Text(result.inputMode == .voice ? "Transcription" : "Original")
+                        Text(sourceContentTitle(for: result.inputMode))
                             .font(LDTypography.caption())
                             .foregroundStyle(LDColor.inkSecondary)
-                        Text(result.sourceText)
+                        Text(displaySourceText(for: result))
                             .font(LDTypography.body())
                             .foregroundStyle(LDColor.inkPrimary)
                     }
@@ -417,9 +520,7 @@ struct TranslateView: View {
         } else {
             LDEmptyStateView(
                 title: "Your translation will appear here",
-                subtitle: viewModel.selectedInputMode == .voice
-                    ? "Pick a target language, speak into the microphone, and stop recording to translate it."
-                    : "Pick a target language, type some text, and translate it to see the result.",
+                subtitle: emptyStateSubtitle,
                 actionTitle: nil,
                 action: nil
             )
@@ -487,6 +588,98 @@ struct TranslateView: View {
         return viewModel.isListeningForVoice
             ? "Speak clearly, then tap stop when you're done."
             : "LinguaDaily will transcribe your speech first, then translate it into your selected target language."
+    }
+
+    private var cameraPrimaryActionTitle: String {
+        if viewModel.isProcessingCameraCapture {
+            return "Processing Photo"
+        }
+
+        return viewModel.hasCapturedCameraImage ? "Retake Photo" : "Open Camera"
+    }
+
+    private var cameraStatusTitle: String {
+        if viewModel.isProcessingCameraCapture {
+            return "Reading text from your image"
+        }
+
+        return viewModel.hasCapturedCameraImage ? "Photo captured" : "Ready to capture"
+    }
+
+    private var cameraStatusSubtitle: String {
+        if viewModel.isProcessingCameraCapture {
+            return "We're extracting text from the image and sending it to translation."
+        }
+
+        return viewModel.hasCapturedCameraImage
+            ? "Review the extracted text below, then retake the photo if anything looks off."
+            : "Capture printed text, menus, signs, or notes and LinguaDaily will translate the extracted words."
+    }
+
+    private var headerTitle: String {
+        switch viewModel.selectedInputMode {
+        case .voice:
+            return "Voice translation is live"
+        case .camera:
+            return "Camera translation is live"
+        case .text:
+            return "Text translation is live"
+        }
+    }
+
+    private var headerSubtitle: String {
+        switch viewModel.selectedInputMode {
+        case .voice:
+            return "Speak a phrase, let LinguaDaily transcribe it, and save the useful translations to your library."
+        case .camera:
+            return "Capture printed text, let LinguaDaily extract it, and save the translations you want to keep."
+        case .text:
+            return "Translate a word, phrase, or sentence, then save the useful ones to your personal library."
+        }
+    }
+
+    private var translationLoadingTitle: String {
+        switch viewModel.selectedInputMode {
+        case .voice:
+            return "Translating speech"
+        case .camera:
+            return "Translating image"
+        case .text:
+            return "Translating text"
+        }
+    }
+
+    private var emptyStateSubtitle: String {
+        switch viewModel.selectedInputMode {
+        case .voice:
+            return "Pick a target language, speak into the microphone, and stop recording to translate it."
+        case .camera:
+            return "Pick a target language, capture an image with readable text, and we'll translate what we find."
+        case .text:
+            return "Pick a target language, type some text, and translate it to see the result."
+        }
+    }
+
+    private func sourceContentTitle(for inputMode: TranslationInputMode) -> String {
+        switch inputMode {
+        case .voice:
+            return "Transcription"
+        case .camera:
+            return "Extracted Text"
+        case .text:
+            return "Original"
+        }
+    }
+
+    private func displaySourceText(for result: TextTranslationResult) -> String {
+        switch result.inputMode {
+        case .voice:
+            return result.transcriptionText ?? result.sourceText
+        case .camera:
+            return result.extractedText ?? result.sourceText
+        case .text:
+            return result.sourceText
+        }
     }
 
     private func showCopyMessage(_ message: String) {
@@ -623,10 +816,10 @@ private struct SavedTranslationDetailView: View {
                         LDCard {
                             VStack(alignment: .leading, spacing: LDSpacing.md) {
                                 VStack(alignment: .leading, spacing: LDSpacing.xs) {
-                                    Text("Original")
+                                    Text(sourceContentTitle(for: translation.inputMode))
                                         .font(LDTypography.caption())
                                         .foregroundStyle(LDColor.inkSecondary)
-                                    Text(translation.sourceText)
+                                    Text(displaySourceText(for: translation))
                                         .font(LDTypography.body())
                                         .foregroundStyle(LDColor.inkPrimary)
                                 }
@@ -737,6 +930,28 @@ private struct SavedTranslationDetailView: View {
         .padding(.vertical, LDSpacing.sm)
         .background(LDColor.surfaceMuted)
         .clipShape(RoundedRectangle(cornerRadius: LDRadius.md, style: .continuous))
+    }
+
+    private func sourceContentTitle(for inputMode: TranslationInputMode) -> String {
+        switch inputMode {
+        case .voice:
+            return "Transcription"
+        case .camera:
+            return "Extracted Text"
+        case .text:
+            return "Original"
+        }
+    }
+
+    private func displaySourceText(for translation: SavedTranslation) -> String {
+        switch translation.inputMode {
+        case .voice:
+            return translation.transcriptionText ?? translation.sourceText
+        case .camera:
+            return translation.extractedText ?? translation.sourceText
+        case .text:
+            return translation.sourceText
+        }
     }
 
     private func showCopyMessage(_ message: String) {

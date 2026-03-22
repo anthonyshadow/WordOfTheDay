@@ -257,6 +257,39 @@ final class SupabaseDataMappingTests: XCTestCase {
         XCTAssertEqual(category, "Verbs")
     }
 
+    func testSavedTranslationDTOMapsCameraMetadataIntoModel() {
+        let createdAt = Date(timeIntervalSince1970: 1_720_000_000)
+        let dto = SavedTranslationDTO(
+            id: UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")!,
+            input_mode: .camera,
+            source_text: "Uscita",
+            translated_text: "Exit",
+            source_language: "it",
+            target_language: "en",
+            is_saved: true,
+            is_favorited: true,
+            transcription_text: nil,
+            extracted_text: "Uscita",
+            source_image_url: "https://cdn.linguadaily.app/translations/uscita.jpg",
+            detection_confidence: 0.84,
+            session_id: "camera-session",
+            created_at: createdAt,
+            updated_at: createdAt
+        )
+
+        let translation = dto.toModel()
+
+        XCTAssertEqual(translation.inputMode, .camera)
+        XCTAssertEqual(translation.sourceText, "Uscita")
+        XCTAssertEqual(translation.translatedText, "Exit")
+        XCTAssertEqual(translation.extractedText, "Uscita")
+        XCTAssertEqual(translation.sourceImageURL?.absoluteString, "https://cdn.linguadaily.app/translations/uscita.jpg")
+        XCTAssertEqual(translation.detectionConfidence, 0.84)
+        XCTAssertEqual(translation.sessionID, "camera-session")
+        XCTAssertTrue(translation.isSaved)
+        XCTAssertTrue(translation.isFavorited)
+    }
+
     private func makeWordDTO() -> WordWithRelationsDTO {
         WordWithRelationsDTO(
             id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,

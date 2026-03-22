@@ -4,6 +4,7 @@ LinguaDaily is an iPhone-first SwiftUI language-learning app built around one da
 
 ## Current status
 - Core product flows are live against Supabase: email auth, onboarding sync, daily lessons, review, archive, profile, settings, and progress.
+- Translate v1 is implemented with text, voice, and camera translation plus saved/favorited translation library flows backed by Supabase.
 - PostHog and Sentry are integrated in the app and loaded from local config.
 - RevenueCat is wired app-side with a safe free-tier fallback when its key or products are not configured yet.
 - Apple Sign In, Google Sign-In, paid App Store subscription products, Apple signing, and TestFlight still wait on Apple developer enrollment.
@@ -16,6 +17,7 @@ LinguaDaily is an iPhone-first SwiftUI language-learning app built around one da
 - Editable profile data saved to Supabase
 - Settings for reminders, preferred accent, daily learning mode, and appearance saved to Supabase
 - Streaks and best retention category computed from real backend activity instead of placeholder values
+- Translate tab with text input, voice transcription, camera OCR, source-language detection, save/favorite, copy/share, and saved-library detail flows
 - Local notification scheduling plus APNs device-token persistence hook once iOS provides a token
 - PostHog capture with identify/reset and basic sensitive-field redaction
 - Sentry crash/error reporting with user binding, redaction, and a debug test event
@@ -77,6 +79,8 @@ xcodegen generate
 
 If you want a truly fresh-user flow in the simulator, log out first or delete the app from the simulator before relaunching.
 
+For Translate specifically, the simulator is still useful for builds and unit tests, but real end-to-end voice and camera translation should be verified on a physical iPhone or iPad because Apple camera capture is unavailable in the simulator and Apple's Translation framework does not perform live translation there.
+
 ## Environment values
 - `SUPABASE_URL`: required for auth and app data
 - `SUPABASE_ANON_KEY`: required for auth and app data
@@ -125,7 +129,7 @@ Run the app from Xcode with the `LinguaDaily` scheme, or run tests from the comm
 xcodebuild -scheme LinguaDaily -project /Users/anthonyshadowitz/Desktop/WordApp/LinguaDaily.xcodeproj -destination 'platform=iOS Simulator,OS=26.3.1,name=iPhone 17' test
 ```
 
-The current suite covers auth, onboarding, notifications, profile, settings, daily lesson, word detail, review, archive, progress, analytics/crash wiring, subscriptions, and domain logic.
+The current suite covers auth, onboarding, notifications, profile, settings, daily lesson, word detail, review, archive, progress, translate flows, analytics/crash wiring, subscriptions, and domain logic.
 
 ## Provider status
 Configured now:
