@@ -310,6 +310,50 @@ struct TestTranslationLanguageSupportProvider: TranslationLanguageSupportProvidi
     }
 }
 
+final class TestVoiceTranslationProvider: VoiceTranslationProviding {
+    var permissionState: VoiceTranslationPermissionState = .authorized
+    var startError: Error?
+    var stopResult: Result<VoiceTranscriptionResult, Error> = .success(
+        VoiceTranscriptionResult(
+            transcript: "Hello",
+            detectedLanguageCode: "en",
+            detectionConfidence: 0.95
+        )
+    )
+    var transcriptUpdatesDuringStart: [String] = []
+
+    private(set) var startedLocaleIdentifiers: [String?] = []
+    private(set) var stopCallCount = 0
+    private(set) var cancelCallCount = 0
+
+    func requestPermissionsIfNeeded() async -> VoiceTranslationPermissionState {
+        permissionState
+    }
+
+    func startTranscribing(
+        localeIdentifier: String?,
+        onUpdate: @escaping @MainActor @Sendable (String) -> Void
+    ) async throws {
+        startedLocaleIdentifiers.append(localeIdentifier)
+        if let startError {
+            throw startError
+        }
+
+        for transcript in transcriptUpdatesDuringStart {
+            await onUpdate(transcript)
+        }
+    }
+
+    func stopTranscribing() async throws -> VoiceTranscriptionResult {
+        stopCallCount += 1
+        return try stopResult.get()
+    }
+
+    func cancelTranscribing() async {
+        cancelCallCount += 1
+    }
+}
+
 enum TestData {
     static func session(email: String = "tester@example.com") -> AuthSession {
         AuthSession(

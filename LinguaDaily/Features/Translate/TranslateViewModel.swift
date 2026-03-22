@@ -1,6 +1,10 @@
+import AVFoundation
 import Foundation
 import Combine
+import NaturalLanguage
+import Speech
 import Translation
+import UIKit
 
 protocol TranslationLanguageSupportProviding {
     var isSimulatorEnvironment: Bool { get }
@@ -23,16 +27,248 @@ struct SystemTranslationLanguageSupportProvider: TranslationLanguageSupportProvi
     }
 }
 
+enum VoiceTranslationPermissionState: Equatable {
+    case authorized
+    case microphoneDenied
+    case speechRecognitionDenied
+    case unavailable
+}
+
+enum VoiceTranslationCaptureState: Equatable {
+    case idle
+    case requestingPermission
+    case listening
+    case processing
+}
+
+struct VoiceTranscriptionResult: Equatable {
+    let transcript: String
+    let detectedLanguageCode: String?
+    let detectionConfidence: Double?
+}
+
+protocol VoiceTranslationProviding {
+    func requestPermissionsIfNeeded() async -> VoiceTranslationPermissionState
+    func startTranscribing(
+        localeIdentifier: String?,
+        onUpdate: @escaping @MainActor @Sendable (String) -> Void
+    ) async throws
+    func stopTranscribing() async throws -> VoiceTranscriptionResult
+    func cancelTranscribing() async
+}
+
+private enum VoiceTranslationError: Error {
+    case microphonePermissionDenied
+    case speechRecognitionPermissionDenied
+    case recognitionUnavailable
+    case audioSessionUnavailable
+    case noSpeechDetected
+}
+
+final class SystemVoiceTranslationProvider: VoiceTranslationProviding {
+    private var audioEngine: AVAudioEngine?
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionTask: SFSpeechRecognitionTask?
+    private var latestTranscript = ""
+    private var latestRecognitionError: Error?
+
+    func requestPermissionsIfNeeded() async -> VoiceTranslationPermissionState {
+        guard await requestMicrophonePermission() else {
+            return .microphoneDenied
+        }
+
+        let speechAuthorizationStatus = await requestSpeechRecognitionAuthorization()
+        switch speechAuthorizationStatus {
+        case .authorized:
+            return .authorized
+        case .denied:
+            return .speechRecognitionDenied
+        case .restricted, .notDetermined:
+            return .unavailable
+        @unknown default:
+            return .unavailable
+        }
+    }
+
+    func startTranscribing(
+        localeIdentifier: String?,
+        onUpdate: @escaping @MainActor @Sendable (String) -> Void
+    ) async throws {
+        await cancelTranscribing()
+
+        guard let recognizer = makeSpeechRecognizer(localeIdentifier: localeIdentifier),
+              recognizer.isAvailable else {
+            throw VoiceTranslationError.recognitionUnavailable
+        }
+
+        let audioEngine = AVAudioEngine()
+        let recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        recognitionRequest.shouldReportPartialResults = true
+        latestTranscript = ""
+        latestRecognitionError = nil
+
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.record, mode: .measurement, options: [.duckOthers])
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            throw VoiceTranslationError.audioSessionUnavailable
+        }
+
+        let inputNode = audioEngine.inputNode
+        let recordingFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.removeTap(onBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
+            self?.recognitionRequest?.append(buffer)
+        }
+
+        self.audioEngine = audioEngine
+        self.recognitionRequest = recognitionRequest
+        self.recognitionTask = recognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
+            guard let self else {
+                return
+            }
+
+            if let result {
+                let transcript = result.bestTranscription.formattedString.trimmingCharacters(in: .whitespacesAndNewlines)
+                latestTranscript = transcript
+                Task { @MainActor in
+                    onUpdate(transcript)
+                }
+            }
+
+            if let error {
+                latestRecognitionError = error
+            }
+        }
+
+        audioEngine.prepare()
+        do {
+            try audioEngine.start()
+        } catch {
+            await cancelTranscribing()
+            throw VoiceTranslationError.audioSessionUnavailable
+        }
+    }
+
+    func stopTranscribing() async throws -> VoiceTranscriptionResult {
+        recognitionRequest?.endAudio()
+        audioEngine?.stop()
+        audioEngine?.inputNode.removeTap(onBus: 0)
+
+        try? await Task.sleep(for: .milliseconds(400))
+
+        let transcript = latestTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let detection = Self.detectLanguage(for: transcript)
+        let recognitionError = latestRecognitionError
+        await cancelTranscribing()
+
+        guard !transcript.isEmpty else {
+            if let recognitionError {
+                throw recognitionError
+            }
+            throw VoiceTranslationError.noSpeechDetected
+        }
+
+        return VoiceTranscriptionResult(
+            transcript: transcript,
+            detectedLanguageCode: detection.languageCode,
+            detectionConfidence: detection.confidence
+        )
+    }
+
+    func cancelTranscribing() async {
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        recognitionRequest = nil
+        audioEngine?.stop()
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        audioEngine = nil
+        latestTranscript = ""
+        latestRecognitionError = nil
+
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    private func makeSpeechRecognizer(localeIdentifier: String?) -> SFSpeechRecognizer? {
+        if let localeIdentifier,
+           let recognizer = SFSpeechRecognizer(locale: Locale(identifier: localeIdentifier)) {
+            return recognizer
+        }
+
+        if let preferredLocaleIdentifier = Locale.preferredLanguages.first,
+           let recognizer = SFSpeechRecognizer(locale: Locale(identifier: preferredLocaleIdentifier)) {
+            return recognizer
+        }
+
+        return SFSpeechRecognizer()
+    }
+
+    private func requestMicrophonePermission() async -> Bool {
+        await withCheckedContinuation { continuation in
+            AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                continuation.resume(returning: granted)
+            }
+        }
+    }
+
+    private func requestSpeechRecognitionAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
+        await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+    }
+
+    private static func detectLanguage(for transcript: String) -> (languageCode: String?, confidence: Double?) {
+        let trimmedTranscript = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTranscript.isEmpty else {
+            return (nil, nil)
+        }
+
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(trimmedTranscript)
+        let hypotheses = recognizer.languageHypotheses(withMaximum: 1)
+        guard let detectedLanguage = hypotheses.first else {
+            return (nil, nil)
+        }
+
+        return (detectedLanguage.key.rawValue, detectedLanguage.value)
+    }
+}
+
 struct TranslationExecutionRequest: Equatable {
     let id: UUID
     let text: String
     let sourceLanguageCode: String?
     let targetLanguageCode: String
+    let inputMode: TranslationInputMode
+    let transcriptionText: String?
+    let extractedText: String?
+    let detectionConfidence: Double?
 }
 
 @MainActor
 final class TranslateViewModel: ObservableObject {
     @Published var languagePhase: AsyncPhase<[Language]> = .idle
+    @Published var selectedInputMode: TranslationInputMode = .text {
+        didSet {
+            guard selectedInputMode != oldValue else {
+                return
+            }
+
+            if oldValue == .voice {
+                Task { await cancelVoiceCapture() }
+            }
+
+            currentResult = nil
+            clearTranslationError()
+            if selectedInputMode != .voice {
+                liveVoiceTranscript = ""
+                voiceCaptureState = .idle
+            }
+        }
+    }
     @Published var inputText = "" {
         didSet {
             if normalizedInputText != currentResult?.sourceText {
@@ -59,6 +295,8 @@ final class TranslateViewModel: ObservableObject {
     @Published private(set) var isSavingResult = false
     @Published private(set) var pendingRequest: TranslationExecutionRequest?
     @Published private(set) var translationConfiguration: TranslationSession.Configuration?
+    @Published private(set) var voiceCaptureState: VoiceTranslationCaptureState = .idle
+    @Published private(set) var liveVoiceTranscript = ""
     @Published var isPresentingSavedLibrary = false
 
     private let onboardingService: OnboardingServiceProtocol
@@ -67,6 +305,7 @@ final class TranslateViewModel: ObservableObject {
     private let crash: CrashReportingServiceProtocol
     private let appState: AppState
     private let translationLanguageSupport: TranslationLanguageSupportProviding
+    private let voiceTranslationProvider: VoiceTranslationProviding
     private var supportedTranslationLanguages: [Locale.Language] = []
     private var errorAction: TranslateErrorAction = .clear
 
@@ -76,7 +315,8 @@ final class TranslateViewModel: ObservableObject {
         analytics: AnalyticsServiceProtocol,
         crash: CrashReportingServiceProtocol,
         appState: AppState,
-        translationLanguageSupport: TranslationLanguageSupportProviding = SystemTranslationLanguageSupportProvider()
+        translationLanguageSupport: TranslationLanguageSupportProviding = SystemTranslationLanguageSupportProvider(),
+        voiceTranslationProvider: VoiceTranslationProviding = SystemVoiceTranslationProvider()
     ) {
         self.onboardingService = onboardingService
         self.translationService = translationService
@@ -84,6 +324,7 @@ final class TranslateViewModel: ObservableObject {
         self.crash = crash
         self.appState = appState
         self.translationLanguageSupport = translationLanguageSupport
+        self.voiceTranslationProvider = voiceTranslationProvider
     }
 
     var availableLanguages: [Language] {
@@ -99,6 +340,18 @@ final class TranslateViewModel: ObservableObject {
 
     var canTranslate: Bool {
         !normalizedInputText.isEmpty && targetLanguage != nil && !isTranslating
+    }
+
+    var canStartVoiceCapture: Bool {
+        targetLanguage != nil && !isTranslating && voiceCaptureState == .idle
+    }
+
+    var isListeningForVoice: Bool {
+        voiceCaptureState == .listening
+    }
+
+    var isProcessingVoiceCapture: Bool {
+        voiceCaptureState == .requestingPermission || voiceCaptureState == .processing
     }
 
     var canSwapLanguages: Bool {
@@ -162,6 +415,129 @@ final class TranslateViewModel: ObservableObject {
     }
 
     func requestTranslation() {
+        switch selectedInputMode {
+        case .text:
+            requestTranslation(
+                inputMode: .text,
+                text: normalizedInputText,
+                transcriptionText: nil,
+                extractedText: nil,
+                detectionConfidence: nil
+            )
+        case .voice:
+            requestTranslation(
+                inputMode: .voice,
+                text: liveVoiceTranscript,
+                transcriptionText: liveVoiceTranscript,
+                extractedText: nil,
+                detectionConfidence: nil
+            )
+        case .camera:
+            break
+        }
+    }
+
+    func startVoiceCapture() async {
+        clearTranslationError()
+        currentResult = nil
+        liveVoiceTranscript = ""
+        voiceCaptureState = .requestingPermission
+
+        let permissionState = await voiceTranslationProvider.requestPermissionsIfNeeded()
+        switch permissionState {
+        case .authorized:
+            break
+        case .microphoneDenied:
+            voiceCaptureState = .idle
+            presentError(
+                ViewError(
+                    title: "Microphone access needed",
+                    message: "Allow microphone access in Settings before starting voice translation.",
+                    actionTitle: "Open Settings"
+                ),
+                action: .openSettings
+            )
+            return
+        case .speechRecognitionDenied:
+            voiceCaptureState = .idle
+            presentError(
+                ViewError(
+                    title: "Speech access needed",
+                    message: "Allow speech recognition in Settings before starting voice translation.",
+                    actionTitle: "Open Settings"
+                ),
+                action: .openSettings
+            )
+            return
+        case .unavailable:
+            voiceCaptureState = .idle
+            presentError(
+                ViewError(
+                    title: "Voice translation unavailable",
+                    message: "Speech recognition isn't available on this device right now.",
+                    actionTitle: "OK"
+                ),
+                action: .clear
+            )
+            return
+        }
+
+        do {
+            try await voiceTranslationProvider.startTranscribing(
+                localeIdentifier: preferredVoiceRecognizerLocaleIdentifier()
+            ) { [weak self] transcript in
+                self?.liveVoiceTranscript = transcript
+            }
+            voiceCaptureState = .listening
+        } catch {
+            voiceCaptureState = .idle
+            presentVoiceCaptureError(error)
+        }
+    }
+
+    func stopVoiceCaptureAndTranslate() async {
+        guard voiceCaptureState == .listening else {
+            return
+        }
+
+        voiceCaptureState = .processing
+
+        do {
+            let transcription = try await voiceTranslationProvider.stopTranscribing()
+            liveVoiceTranscript = transcription.transcript
+            voiceCaptureState = .idle
+            requestTranslation(
+                inputMode: .voice,
+                text: transcription.transcript,
+                transcriptionText: transcription.transcript,
+                extractedText: nil,
+                detectionConfidence: transcription.detectionConfidence
+            )
+        } catch {
+            voiceCaptureState = .idle
+            presentVoiceCaptureError(error)
+        }
+    }
+
+    func cancelVoiceCapture() async {
+        await voiceTranslationProvider.cancelTranscribing()
+        voiceCaptureState = .idle
+        liveVoiceTranscript = ""
+    }
+
+    func clearVoiceTranscript() {
+        liveVoiceTranscript = ""
+        currentResult = nil
+        clearTranslationError()
+    }
+
+    private func requestTranslation(
+        inputMode: TranslationInputMode,
+        text: String,
+        transcriptionText: String?,
+        extractedText: String?,
+        detectionConfidence: Double?
+    ) {
         guard let targetLanguage else {
             presentError(
                 AppError.validation("Choose a target language before translating.").viewError,
@@ -170,7 +546,7 @@ final class TranslateViewModel: ObservableObject {
             return
         }
 
-        let trimmedInput = normalizedInputText
+        let trimmedInput = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedInput.isEmpty else {
             presentError(
                 AppError.validation("Enter a word, phrase, or sentence to translate.").viewError,
@@ -225,7 +601,11 @@ final class TranslateViewModel: ObservableObject {
             id: UUID(),
             text: trimmedInput,
             sourceLanguageCode: sourceSelection.language?.code,
-            targetLanguageCode: targetLanguage.code
+            targetLanguageCode: targetLanguage.code,
+            inputMode: inputMode,
+            transcriptionText: transcriptionText,
+            extractedText: extractedText,
+            detectionConfidence: detectionConfidence
         )
         pendingRequest = request
 
@@ -243,7 +623,7 @@ final class TranslateViewModel: ObservableObject {
         analytics.track(
             .translateRequested,
             properties: [
-                "input_mode": TranslationInputMode.text.rawValue,
+                "input_mode": inputMode.rawValue,
                 "source_language": request.sourceLanguageCode ?? "auto",
                 "target_language": request.targetLanguageCode,
                 "text_length": "\(trimmedInput.count)"
@@ -264,7 +644,11 @@ final class TranslateViewModel: ObservableObject {
                 translatedText: response.targetText,
                 sourceLanguageIdentifier: response.sourceLanguage.minimalIdentifier,
                 targetLanguageIdentifier: response.targetLanguage.minimalIdentifier,
-                sessionID: request.id.uuidString
+                sessionID: request.id.uuidString,
+                inputMode: request.inputMode,
+                transcriptionText: request.transcriptionText,
+                extractedText: request.extractedText,
+                detectionConfidence: request.detectionConfidence
             )
         } catch {
             handleTranslationFailure(error)
@@ -276,22 +660,30 @@ final class TranslateViewModel: ObservableObject {
         translatedText: String,
         sourceLanguageIdentifier: String,
         targetLanguageIdentifier: String,
-        sessionID: String?
+        sessionID: String?,
+        inputMode: TranslationInputMode = .text,
+        transcriptionText: String? = nil,
+        extractedText: String? = nil,
+        detectionConfidence: Double? = nil
     ) {
         isTranslating = false
         pendingRequest = nil
         clearTranslationError()
         currentResult = TextTranslationResult(
+            inputMode: inputMode,
             sourceText: sourceText,
             translatedText: translatedText,
             sourceLanguage: Self.minimalLanguageIdentifier(from: sourceLanguageIdentifier),
             targetLanguage: Self.minimalLanguageIdentifier(from: targetLanguageIdentifier),
+            transcriptionText: transcriptionText,
+            extractedText: extractedText,
+            detectionConfidence: detectionConfidence,
             sessionID: sessionID
         )
         analytics.track(
             .translateSucceeded,
             properties: [
-                "input_mode": TranslationInputMode.text.rawValue,
+                "input_mode": inputMode.rawValue,
                 "source_language": Self.minimalLanguageIdentifier(from: sourceLanguageIdentifier),
                 "target_language": Self.minimalLanguageIdentifier(from: targetLanguageIdentifier)
             ]
@@ -346,7 +738,8 @@ final class TranslateViewModel: ObservableObject {
                     .translationRemoved,
                     properties: translationAnalyticsProperties(
                         sourceLanguage: result.sourceLanguage,
-                        targetLanguage: result.targetLanguage
+                        targetLanguage: result.targetLanguage,
+                        inputMode: result.inputMode
                     )
                 )
             } else {
@@ -361,7 +754,8 @@ final class TranslateViewModel: ObservableObject {
                     .translationSaved,
                     properties: translationAnalyticsProperties(
                         sourceLanguage: savedTranslation.sourceLanguage,
-                        targetLanguage: savedTranslation.targetLanguage
+                        targetLanguage: savedTranslation.targetLanguage,
+                        inputMode: savedTranslation.inputMode
                     )
                 )
             }
@@ -392,7 +786,8 @@ final class TranslateViewModel: ObservableObject {
                     updatedTranslation.isFavorited ? .translationFavorited : .translationUnfavorited,
                     properties: translationAnalyticsProperties(
                         sourceLanguage: updatedTranslation.sourceLanguage,
-                        targetLanguage: updatedTranslation.targetLanguage
+                        targetLanguage: updatedTranslation.targetLanguage,
+                        inputMode: updatedTranslation.inputMode
                     )
                 )
             } else {
@@ -407,7 +802,8 @@ final class TranslateViewModel: ObservableObject {
                     .translationFavorited,
                     properties: translationAnalyticsProperties(
                         sourceLanguage: savedTranslation.sourceLanguage,
-                        targetLanguage: savedTranslation.targetLanguage
+                        targetLanguage: savedTranslation.targetLanguage,
+                        inputMode: savedTranslation.inputMode
                     )
                 )
             }
@@ -425,7 +821,8 @@ final class TranslateViewModel: ObservableObject {
             .translationCopied,
             properties: translationAnalyticsProperties(
                 sourceLanguage: currentResult.sourceLanguage,
-                targetLanguage: currentResult.targetLanguage
+                targetLanguage: currentResult.targetLanguage,
+                inputMode: currentResult.inputMode
             )
         )
     }
@@ -438,7 +835,8 @@ final class TranslateViewModel: ObservableObject {
             .translationShared,
             properties: translationAnalyticsProperties(
                 sourceLanguage: currentResult.sourceLanguage,
-                targetLanguage: currentResult.targetLanguage
+                targetLanguage: currentResult.targetLanguage,
+                inputMode: currentResult.inputMode
             )
         )
     }
@@ -449,6 +847,14 @@ final class TranslateViewModel: ObservableObject {
             clearTranslationError()
         case .retryTranslation:
             requestTranslation()
+        case .retryVoiceCapture:
+            Task { await startVoiceCapture() }
+        case .openSettings:
+            guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
+                clearTranslationError()
+                return
+            }
+            UIApplication.shared.open(settingsURL)
         }
     }
 
@@ -478,12 +884,40 @@ final class TranslateViewModel: ObservableObject {
         errorAction = .clear
     }
 
-    private func translationAnalyticsProperties(sourceLanguage: String, targetLanguage: String) -> [String: String] {
+    private func translationAnalyticsProperties(
+        sourceLanguage: String,
+        targetLanguage: String,
+        inputMode: TranslationInputMode
+    ) -> [String: String] {
         [
-            "input_mode": TranslationInputMode.text.rawValue,
+            "input_mode": inputMode.rawValue,
             "source_language": Self.minimalLanguageIdentifier(from: sourceLanguage),
             "target_language": Self.minimalLanguageIdentifier(from: targetLanguage)
         ]
+    }
+
+    private func presentVoiceCaptureError(_ error: Error) {
+        let mappedError = Self.mapVoiceCaptureError(error)
+        presentError(mappedError.viewError, action: mappedError.action)
+    }
+
+    private func preferredVoiceRecognizerLocaleIdentifier() -> String? {
+        if let manualSourceLanguage = sourceSelection.language {
+            return preferredLocaleIdentifier(for: manualSourceLanguage.code) ?? manualSourceLanguage.code
+        }
+
+        return Locale.preferredLanguages.first
+    }
+
+    private func preferredLocaleIdentifier(for languageCode: String) -> String? {
+        let normalizedCode = Self.baseLanguageCode(from: languageCode)
+        if let preferredLocale = Locale.preferredLanguages.first(where: {
+            Self.baseLanguageCode(from: $0) == normalizedCode
+        }) {
+            return preferredLocale
+        }
+
+        return nil
     }
 
     private static func minimalLanguageIdentifier(from identifier: String) -> String {
@@ -651,6 +1085,80 @@ final class TranslateViewModel: ObservableObject {
             action: .retryTranslation,
             shouldCapture: true,
             reason: "unexpected"
+        )
+    }
+
+    private static func mapVoiceCaptureError(_ error: Error) -> MappedTranslationError {
+        if let voiceError = error as? VoiceTranslationError {
+            switch voiceError {
+            case .microphonePermissionDenied:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "Microphone access needed",
+                        message: "Allow microphone access in Settings before starting voice translation.",
+                        actionTitle: "Open Settings"
+                    ),
+                    action: .openSettings,
+                    shouldCapture: false,
+                    reason: "microphone_permission_denied"
+                )
+            case .speechRecognitionPermissionDenied:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "Speech access needed",
+                        message: "Allow speech recognition in Settings before starting voice translation.",
+                        actionTitle: "Open Settings"
+                    ),
+                    action: .openSettings,
+                    shouldCapture: false,
+                    reason: "speech_permission_denied"
+                )
+            case .recognitionUnavailable:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "Voice translation unavailable",
+                        message: "Speech recognition isn't available on this device right now.",
+                        actionTitle: "OK"
+                    ),
+                    action: .clear,
+                    shouldCapture: false,
+                    reason: "recognition_unavailable"
+                )
+            case .audioSessionUnavailable:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "Voice translation unavailable",
+                        message: "We couldn't start the microphone session. Please try again.",
+                        actionTitle: "Retry"
+                    ),
+                    action: .retryVoiceCapture,
+                    shouldCapture: false,
+                    reason: "audio_session_unavailable"
+                )
+            case .noSpeechDetected:
+                return MappedTranslationError(
+                    viewError: ViewError(
+                        title: "No speech detected",
+                        message: "Try speaking a little longer or move somewhere quieter, then try again.",
+                        actionTitle: "Try Again"
+                    ),
+                    action: .retryVoiceCapture,
+                    shouldCapture: false,
+                    reason: "no_speech_detected"
+                )
+            }
+        }
+
+        let message = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        return MappedTranslationError(
+            viewError: ViewError(
+                title: "Voice translation unavailable",
+                message: message.isEmpty ? "We couldn't capture your speech. Please try again." : message,
+                actionTitle: "Try Again"
+            ),
+            action: .retryVoiceCapture,
+            shouldCapture: true,
+            reason: "voice_unexpected"
         )
     }
 }
@@ -852,6 +1360,8 @@ final class SavedTranslationsViewModel: ObservableObject {
 private enum TranslateErrorAction {
     case clear
     case retryTranslation
+    case retryVoiceCapture
+    case openSettings
 }
 
 private struct MappedTranslationError {

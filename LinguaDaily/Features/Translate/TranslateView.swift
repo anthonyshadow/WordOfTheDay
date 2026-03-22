@@ -39,9 +39,13 @@ struct TranslateView: View {
                 ScrollView {
                     VStack(spacing: LDSpacing.md) {
                         headerCard
+                        modeCard
                         languageCard
-                        inputCard
-                        translateButton
+                        activeInputCard
+
+                        if viewModel.selectedInputMode == .text {
+                            translateButton
+                        }
 
                         if let translationError = viewModel.translationError {
                             LDErrorStateView(error: translationError) {
@@ -102,12 +106,35 @@ struct TranslateView: View {
     private var headerCard: some View {
         LDCard(background: AnyShapeStyle(LDColor.accent.opacity(0.12))) {
             VStack(alignment: .leading, spacing: LDSpacing.xs) {
-                Text("Text translation is live")
+                Text(viewModel.selectedInputMode == .voice ? "Voice translation is live" : "Text translation is live")
                     .font(LDTypography.section())
                     .foregroundStyle(LDColor.inkPrimary)
-                Text("Translate a word, phrase, or sentence, then save the useful ones to your personal library.")
+                Text(
+                    viewModel.selectedInputMode == .voice
+                        ? "Speak a phrase, let LinguaDaily transcribe it, and save the useful translations to your library."
+                        : "Translate a word, phrase, or sentence, then save the useful ones to your personal library."
+                )
                     .font(LDTypography.body())
                     .foregroundStyle(LDColor.inkSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var modeCard: some View {
+        LDCard {
+            VStack(alignment: .leading, spacing: LDSpacing.sm) {
+                Text("Mode")
+                    .font(LDTypography.section())
+                    .foregroundStyle(LDColor.inkPrimary)
+
+                HStack(spacing: LDSpacing.xs) {
+                    ForEach([TranslationInputMode.voice, .text], id: \.self) { mode in
+                        LDFilterChip(title: mode.title, isActive: viewModel.selectedInputMode == mode) {
+                            viewModel.selectedInputMode = mode
+                        }
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -159,6 +186,18 @@ struct TranslateView: View {
         }
     }
 
+    @ViewBuilder
+    private var activeInputCard: some View {
+        switch viewModel.selectedInputMode {
+        case .voice:
+            voiceInputCard
+        case .text:
+            inputCard
+        case .camera:
+            EmptyView()
+        }
+    }
+
     private var inputCard: some View {
         LDCard {
             VStack(alignment: .leading, spacing: LDSpacing.sm) {
@@ -197,6 +236,81 @@ struct TranslateView: View {
         }
     }
 
+    private var voiceInputCard: some View {
+        LDCard {
+            VStack(alignment: .leading, spacing: LDSpacing.md) {
+                HStack {
+                    Text("Voice")
+                        .font(LDTypography.section())
+                        .foregroundStyle(LDColor.inkPrimary)
+                    Spacer()
+                    if !viewModel.liveVoiceTranscript.isEmpty && !viewModel.isListeningForVoice && !viewModel.isProcessingVoiceCapture {
+                        Button("Clear") {
+                            viewModel.clearVoiceTranscript()
+                        }
+                        .font(LDTypography.caption())
+                        .foregroundStyle(LDColor.accent)
+                    }
+                }
+
+                Button {
+                    Task {
+                        if viewModel.isListeningForVoice {
+                            await viewModel.stopVoiceCaptureAndTranslate()
+                        } else {
+                            await viewModel.startVoiceCapture()
+                        }
+                    }
+                } label: {
+                    HStack(spacing: LDSpacing.sm) {
+                        if viewModel.isProcessingVoiceCapture {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Image(systemName: viewModel.isListeningForVoice ? "stop.fill" : "mic.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                        }
+
+                        Text(voicePrimaryActionTitle)
+                            .font(LDTypography.bodyBold())
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(LDPrimaryButtonStyle())
+                .disabled((!viewModel.canStartVoiceCapture && !viewModel.isListeningForVoice) || viewModel.isProcessingVoiceCapture)
+
+                VStack(alignment: .leading, spacing: LDSpacing.xs) {
+                    Text(voiceStatusTitle)
+                        .font(LDTypography.bodyBold())
+                        .foregroundStyle(LDColor.inkPrimary)
+                    Text(voiceStatusSubtitle)
+                        .font(LDTypography.body())
+                        .foregroundStyle(LDColor.inkSecondary)
+                }
+
+                Group {
+                    if viewModel.liveVoiceTranscript.isEmpty {
+                        Text("Tap the microphone and speak a word, phrase, or sentence to translate.")
+                            .font(LDTypography.body())
+                            .foregroundStyle(LDColor.inkSecondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, LDSpacing.sm)
+                    } else {
+                        Text(viewModel.liveVoiceTranscript)
+                            .font(LDTypography.body())
+                            .foregroundStyle(LDColor.inkPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, LDSpacing.sm)
+                    }
+                }
+                .padding(.horizontal, LDSpacing.sm)
+                .background(LDColor.surfaceMuted)
+                .clipShape(RoundedRectangle(cornerRadius: LDRadius.md, style: .continuous))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     private var translateButton: some View {
         Button {
             viewModel.requestTranslation()
@@ -219,13 +333,13 @@ struct TranslateView: View {
 
     @ViewBuilder
     private var resultSection: some View {
-        if viewModel.isTranslating {
-            LDLoadingStateView(title: "Translating text")
+        if viewModel.isTranslating || viewModel.isProcessingVoiceCapture {
+            LDLoadingStateView(title: viewModel.selectedInputMode == .voice ? "Translating speech" : "Translating text")
         } else if let result = viewModel.currentResult {
             LDCard {
                 VStack(alignment: .leading, spacing: LDSpacing.md) {
                     VStack(alignment: .leading, spacing: LDSpacing.xs) {
-                        Text("Original")
+                        Text(result.inputMode == .voice ? "Transcription" : "Original")
                             .font(LDTypography.caption())
                             .foregroundStyle(LDColor.inkSecondary)
                         Text(result.sourceText)
@@ -303,7 +417,9 @@ struct TranslateView: View {
         } else {
             LDEmptyStateView(
                 title: "Your translation will appear here",
-                subtitle: "Pick a target language, type some text, and translate it to see the result.",
+                subtitle: viewModel.selectedInputMode == .voice
+                    ? "Pick a target language, speak into the microphone, and stop recording to translate it."
+                    : "Pick a target language, type some text, and translate it to see the result.",
                 actionTitle: nil,
                 action: nil
             )
@@ -345,6 +461,32 @@ struct TranslateView: View {
         .padding(.vertical, LDSpacing.xs)
         .background(LDColor.surfaceMuted)
         .clipShape(RoundedRectangle(cornerRadius: LDRadius.md, style: .continuous))
+    }
+
+    private var voicePrimaryActionTitle: String {
+        if viewModel.isProcessingVoiceCapture {
+            return "Preparing Translation"
+        }
+
+        return viewModel.isListeningForVoice ? "Stop and Translate" : "Start Listening"
+    }
+
+    private var voiceStatusTitle: String {
+        if viewModel.isProcessingVoiceCapture {
+            return "Processing your speech"
+        }
+
+        return viewModel.isListeningForVoice ? "Listening now" : "Ready when you are"
+    }
+
+    private var voiceStatusSubtitle: String {
+        if viewModel.isProcessingVoiceCapture {
+            return "We're finalizing the transcript and sending it to translation."
+        }
+
+        return viewModel.isListeningForVoice
+            ? "Speak clearly, then tap stop when you're done."
+            : "LinguaDaily will transcribe your speech first, then translate it into your selected target language."
     }
 
     private func showCopyMessage(_ message: String) {

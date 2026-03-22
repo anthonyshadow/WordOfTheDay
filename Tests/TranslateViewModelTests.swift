@@ -116,6 +116,74 @@ final class TranslateViewModelTests: XCTestCase {
         )
     }
 
+    func testStartVoiceCaptureShowsSettingsErrorWhenSpeechPermissionIsDenied() async {
+        let voiceTranslationProvider = TestVoiceTranslationProvider()
+        voiceTranslationProvider.permissionState = .speechRecognitionDenied
+        let viewModel = makeViewModel(voiceTranslationProvider: voiceTranslationProvider)
+
+        await viewModel.load()
+        viewModel.selectedInputMode = .voice
+        viewModel.targetLanguage = SampleData.french
+        await viewModel.startVoiceCapture()
+
+        XCTAssertEqual(viewModel.translationError?.title, "Speech access needed")
+        XCTAssertEqual(viewModel.translationError?.actionTitle, "Open Settings")
+        XCTAssertEqual(viewModel.voiceCaptureState, .idle)
+    }
+
+    func testVoiceTranslationUsesVoiceInputModeWhenSavingResult() async {
+        let translationService = TestTranslationService()
+        let voiceTranslationProvider = TestVoiceTranslationProvider()
+        voiceTranslationProvider.transcriptUpdatesDuringStart = ["How are you"]
+        voiceTranslationProvider.stopResult = .success(
+            VoiceTranscriptionResult(
+                transcript: "How are you",
+                detectedLanguageCode: "en",
+                detectionConfidence: 0.88
+            )
+        )
+        let translationLanguageSupport = TestTranslationLanguageSupportProvider(
+            languages: [Locale.Language(identifier: "fr-FR")]
+        )
+        let viewModel = makeViewModel(
+            translationService: translationService,
+            translationLanguageSupport: translationLanguageSupport,
+            voiceTranslationProvider: voiceTranslationProvider
+        )
+
+        await viewModel.load()
+        viewModel.selectedInputMode = .voice
+        viewModel.targetLanguage = SampleData.french
+
+        await viewModel.startVoiceCapture()
+        XCTAssertEqual(viewModel.liveVoiceTranscript, "How are you")
+        XCTAssertTrue(viewModel.isListeningForVoice)
+
+        await viewModel.stopVoiceCaptureAndTranslate()
+        XCTAssertEqual(viewModel.pendingRequest?.text, "How are you")
+        XCTAssertEqual(viewModel.pendingRequest?.inputMode, .voice)
+
+        viewModel.handleSuccessfulTranslation(
+            sourceText: "How are you",
+            translatedText: "Comment ca va ?",
+            sourceLanguageIdentifier: "en-US",
+            targetLanguageIdentifier: "fr-FR",
+            sessionID: "voice-session",
+            inputMode: .voice,
+            transcriptionText: "How are you",
+            detectionConfidence: 0.88
+        )
+
+        XCTAssertEqual(viewModel.currentResult?.inputMode, .voice)
+        XCTAssertEqual(viewModel.currentResult?.transcriptionText, "How are you")
+
+        await viewModel.toggleSaveForCurrentResult()
+
+        XCTAssertEqual(translationService.createdDrafts.first?.draft.inputMode, .voice)
+        XCTAssertEqual(translationService.createdDrafts.first?.draft.transcriptionText, "How are you")
+        XCTAssertEqual(translationService.createdDrafts.first?.draft.detectionConfidence, 0.88)
+    }
+
     func testHandleSuccessfulTranslationCreatesUnsavedResultAndTracksSuccess() {
         let analytics = TestAnalyticsService()
         let viewModel = makeViewModel(analytics: analytics)
@@ -218,7 +286,8 @@ final class TranslateViewModelTests: XCTestCase {
         analytics: TestAnalyticsService = TestAnalyticsService(),
         crash: TestCrashReportingService = TestCrashReportingService(),
         appState: AppState? = nil,
-        translationLanguageSupport: TestTranslationLanguageSupportProvider = TestTranslationLanguageSupportProvider()
+        translationLanguageSupport: TestTranslationLanguageSupportProvider = TestTranslationLanguageSupportProvider(),
+        voiceTranslationProvider: TestVoiceTranslationProvider = TestVoiceTranslationProvider()
     ) -> TranslateViewModel {
         TranslateViewModel(
             onboardingService: onboardingService,
@@ -226,7 +295,8 @@ final class TranslateViewModelTests: XCTestCase {
             analytics: analytics,
             crash: crash,
             appState: appState ?? AppState(),
-            translationLanguageSupport: translationLanguageSupport
+            translationLanguageSupport: translationLanguageSupport,
+            voiceTranslationProvider: voiceTranslationProvider
         )
     }
 }

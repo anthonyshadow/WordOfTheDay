@@ -113,29 +113,41 @@ struct SavedTranslation: Identifiable, Codable, Hashable {
 
 struct TextTranslationResult: Identifiable, Hashable {
     let id: UUID
+    let inputMode: TranslationInputMode
     let sourceText: String
     let translatedText: String
     let sourceLanguage: String
     let targetLanguage: String
+    let transcriptionText: String?
+    let extractedText: String?
+    let detectionConfidence: Double?
     var savedTranslationID: UUID?
     var isFavorited: Bool
     let sessionID: String?
 
     init(
         id: UUID = UUID(),
+        inputMode: TranslationInputMode = .text,
         sourceText: String,
         translatedText: String,
         sourceLanguage: String,
         targetLanguage: String,
+        transcriptionText: String? = nil,
+        extractedText: String? = nil,
+        detectionConfidence: Double? = nil,
         savedTranslationID: UUID? = nil,
         isFavorited: Bool = false,
         sessionID: String? = nil
     ) {
         self.id = id
+        self.inputMode = inputMode
         self.sourceText = sourceText
         self.translatedText = translatedText
         self.sourceLanguage = sourceLanguage
         self.targetLanguage = targetLanguage
+        self.transcriptionText = transcriptionText
+        self.extractedText = extractedText
+        self.detectionConfidence = detectionConfidence
         self.savedTranslationID = savedTranslationID
         self.isFavorited = isFavorited
         self.sessionID = sessionID
@@ -169,15 +181,15 @@ struct TextTranslationResult: Identifiable, Hashable {
 
     var draft: TranslationDraft {
         TranslationDraft(
-            inputMode: .text,
+            inputMode: inputMode,
             sourceText: sourceText,
             translatedText: translatedText,
             sourceLanguage: sourceLanguage,
             targetLanguage: targetLanguage,
-            transcriptionText: nil,
-            extractedText: nil,
+            transcriptionText: transcriptionText,
+            extractedText: extractedText,
             sourceImageURL: nil,
-            detectionConfidence: nil,
+            detectionConfidence: detectionConfidence,
             sessionID: sessionID
         )
     }
@@ -185,10 +197,14 @@ struct TextTranslationResult: Identifiable, Hashable {
     init(savedTranslation: SavedTranslation) {
         self.init(
             id: savedTranslation.id,
+            inputMode: savedTranslation.inputMode,
             sourceText: savedTranslation.sourceText,
             translatedText: savedTranslation.translatedText,
             sourceLanguage: savedTranslation.sourceLanguage,
             targetLanguage: savedTranslation.targetLanguage,
+            transcriptionText: savedTranslation.transcriptionText,
+            extractedText: savedTranslation.extractedText,
+            detectionConfidence: savedTranslation.detectionConfidence,
             savedTranslationID: savedTranslation.id,
             isFavorited: savedTranslation.isFavorited,
             sessionID: savedTranslation.sessionID
