@@ -27,10 +27,15 @@ final class TestAnalyticsService: AnalyticsServiceProtocol {
 final class TestCrashReportingService: CrashReportingServiceProtocol {
     private(set) var capturedErrors: [Error] = []
     private(set) var contexts: [[String: String]] = []
+    private(set) var userSessions: [AuthSession?] = []
 
     func capture(_ error: Error, context: [String : String]) {
         capturedErrors.append(error)
         contexts.append(context)
+    }
+
+    func setUser(_ session: AuthSession?) {
+        userSessions.append(session)
     }
 }
 

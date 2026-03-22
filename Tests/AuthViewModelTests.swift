@@ -30,8 +30,9 @@ final class AuthViewModelTests: XCTestCase {
     func testSubmitEmailLoginSuccessSetsSessionAndTracksEvents() async {
         let auth = TestAuthService()
         let analytics = TestAnalyticsService()
+        let crash = TestCrashReportingService()
         let appState = AppState()
-        let viewModel = makeViewModel(auth: auth, analytics: analytics, appState: appState)
+        let viewModel = makeViewModel(auth: auth, analytics: analytics, crash: crash, appState: appState)
         viewModel.email = "login@example.com"
         viewModel.password = "secret1"
 
@@ -40,6 +41,7 @@ final class AuthViewModelTests: XCTestCase {
         XCTAssertEqual(auth.signInCalls.count, 1)
         XCTAssertEqual(auth.signUpCalls.count, 0)
         XCTAssertEqual(appState.session?.email, TestData.session().email)
+        XCTAssertEqual(crash.userSessions, [TestData.session()])
         XCTAssertEqual(analytics.identifiedSessions, [TestData.session()])
         XCTAssertSuccess(viewModel.phase)
         XCTAssertEqual(analytics.events.map(\.event), [.authEmailLoginTapped, .authSuccess])

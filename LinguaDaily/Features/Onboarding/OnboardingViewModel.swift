@@ -237,6 +237,7 @@ final class OnboardingViewModel: ObservableObject {
         }
         appState.session = session
         appState.onboardingState = onboardingState
+        crashReporter.setUser(session)
         analytics.identify(session)
         analytics.track(.authSuccess, properties: [:])
         analytics.track(.signupCompleted, properties: [:])

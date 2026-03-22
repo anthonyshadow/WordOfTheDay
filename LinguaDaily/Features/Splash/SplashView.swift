@@ -40,6 +40,7 @@ struct SplashView: View {
             appState.session = nil
             appState.onboardingState = .empty
         }
+        dependencies.crashService.setUser(appState.session)
 
         do {
             appState.subscriptionState = try await dependencies.subscriptionService.fetchSubscriptionState()

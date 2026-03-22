@@ -46,19 +46,45 @@ final class SettingsViewModelTests: XCTestCase {
     func testLogOutClearsSessionAndNavigation() async {
         let auth = TestAuthService()
         let analytics = TestAnalyticsService()
+        let crash = TestCrashReportingService()
         let appState = AppState()
         appState.session = TestData.session()
         appState.subscriptionState = SubscriptionState(tier: .premium, isTrial: false, expiresAt: nil)
         appState.path = [.settings, .paywall]
-        let viewModel = makeViewModel(auth: auth, analytics: analytics, appState: appState)
+        let viewModel = makeViewModel(auth: auth, analytics: analytics, crash: crash, appState: appState)
 
         await viewModel.logOut()
 
         XCTAssertEqual(auth.signOutCallCount, 1)
         XCTAssertEqual(analytics.resetCallCount, 1)
+        XCTAssertEqual(crash.userSessions, [nil])
         XCTAssertNil(appState.session)
         XCTAssertEqual(appState.subscriptionState.tier, .free)
         XCTAssertTrue(appState.path.isEmpty)
+    }
+
+    func testSendSentryTestEventCapturesHandledErrorAndSetsStatus() {
+        let crash = TestCrashReportingService()
+        let appState = AppState()
+        appState.session = TestData.session()
+        let viewModel = makeViewModel(crash: crash, appState: appState)
+
+        viewModel.sendSentryTestEvent()
+
+        XCTAssertEqual(crash.capturedErrors.count, 1)
+        XCTAssertEqual(
+            crash.contexts,
+            [[
+                "feature": "settings_debug_sentry",
+                "trigger": "manual",
+                "screen": "settings",
+                "authenticated": "true"
+            ]]
+        )
+        XCTAssertEqual(
+            viewModel.sentryTestStatusMessage,
+            "Sent a handled Sentry test event. Check Sentry in a moment."
+        )
     }
 
     private func makeViewModel(

@@ -101,10 +101,12 @@ final class OnboardingViewModelTests: XCTestCase {
     func testSubmitEmailAuthIdentifiesSessionBeforeCompletionEvents() async {
         let onboardingService = TestOnboardingService()
         let analytics = TestAnalyticsService()
+        let crash = TestCrashReportingService()
         let appState = AppState()
         let viewModel = makeViewModel(
             onboardingService: onboardingService,
             analytics: analytics,
+            crash: crash,
             appState: appState
         )
         viewModel.email = "signup@example.com"
@@ -113,6 +115,7 @@ final class OnboardingViewModelTests: XCTestCase {
         await viewModel.submitEmailAuth()
 
         XCTAssertEqual(appState.session, TestData.session(email: "signup@example.com"))
+        XCTAssertEqual(crash.userSessions, [TestData.session(email: "signup@example.com")])
         XCTAssertEqual(analytics.identifiedSessions, [TestData.session(email: "signup@example.com")])
         XCTAssertEqual(analytics.events.map(\.event), [
             .onboardingStarted,

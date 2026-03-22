@@ -5,6 +5,7 @@ import Combine
 final class SettingsViewModel: ObservableObject {
     @Published var phase: AsyncPhase<NotificationPreference> = .idle
     @Published var reminder = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date()
+    @Published private(set) var sentryTestStatusMessage: String?
 
     private let notificationService: NotificationServiceProtocol
     private let authService: AuthServiceProtocol
@@ -60,6 +61,7 @@ final class SettingsViewModel: ObservableObject {
         do {
             try await authService.signOut()
             analytics.reset()
+            crash.setUser(nil)
             appState.session = nil
             appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
             appState.resetNavigation()
@@ -73,12 +75,26 @@ final class SettingsViewModel: ObservableObject {
         do {
             try await authService.signOut()
             analytics.reset()
+            crash.setUser(nil)
             appState.session = nil
             appState.subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
             appState.resetNavigation()
         } catch {
             crash.capture(error, context: ["feature": "settings_delete_account"])
         }
+    }
+
+    func sendSentryTestEvent() {
+        crash.capture(
+            SettingsDebugSentryTestError(),
+            context: [
+                "feature": "settings_debug_sentry",
+                "trigger": "manual",
+                "screen": "settings",
+                "authenticated": appState.session == nil ? "false" : "true"
+            ]
+        )
+        sentryTestStatusMessage = "Sent a handled Sentry test event. Check Sentry in a moment."
     }
 
     private func savePreference(_ preference: NotificationPreference) async {
@@ -91,5 +107,23 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             crash.capture(error, context: ["feature": "settings_save_notification"])
         }
+    }
+}
+
+private struct SettingsDebugSentryTestError: LocalizedError, CustomNSError {
+    static var errorDomain: String {
+        "com.linguadaily.debug.sentry"
+    }
+
+    var errorCode: Int {
+        1001
+    }
+
+    var errorUserInfo: [String : Any] {
+        [NSLocalizedDescriptionKey: errorDescription ?? "Manual Sentry test event from Settings"]
+    }
+
+    var errorDescription: String? {
+        "Manual Sentry test event from Settings"
     }
 }

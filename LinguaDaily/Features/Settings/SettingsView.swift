@@ -95,6 +95,30 @@ struct SettingsView: View {
             }
             .buttonStyle(LDSecondaryButtonStyle())
             .tint(LDColor.danger)
+
+            #if DEBUG
+            LDCard {
+                VStack(alignment: .leading, spacing: LDSpacing.sm) {
+                    Text("Debug")
+                        .font(LDTypography.section())
+
+                    Text("Send a handled test event to Sentry without crashing the app.")
+                        .font(LDTypography.caption())
+                        .foregroundStyle(LDColor.inkSecondary)
+
+                    Button("Send Sentry test event") {
+                        viewModel.sendSentryTestEvent()
+                    }
+                    .buttonStyle(LDSecondaryButtonStyle())
+
+                    if let statusMessage = viewModel.sentryTestStatusMessage {
+                        Text(statusMessage)
+                            .font(LDTypography.caption())
+                            .foregroundStyle(LDColor.inkSecondary)
+                    }
+                }
+            }
+            #endif
         }
     }
 

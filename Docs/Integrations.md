@@ -32,5 +32,7 @@
 
 ## Sentry
 - Add Sentry Cocoa package.
-- Initialize with `SENTRY_DSN`.
-- Replace prints in `SentryCrashReportingService` with `SentrySDK.capture(error:)`.
+- Add a quoted `SENTRY_DSN` in `Config/Environment.xcconfig`.
+- Optionally add `SENTRY_AUTH_TOKEN` if you want the Xcode build script to upload dSYMs with `sentry-cli`.
+- `SentryCrashReportingService` initializes the SDK, tags errors with app context, links the authenticated user after login/restore, and clears user context on logout.
+- Sensitive keys like tokens, passwords, secrets, cookies, and auth headers are redacted in `beforeSend`.
