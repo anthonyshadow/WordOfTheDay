@@ -14,11 +14,47 @@ struct WordDTO: Decodable {
     let lemma: String
     let transliteration: String?
     let pronunciation_ipa: String?
+    let pronunciation_guidance: String?
     let part_of_speech: String?
     let cefr_level: String?
     let frequency_rank: Int?
     let definition: String
     let usage_notes: String?
+    let language_variant: String?
+    let enrichment_source: String?
+    let enrichment_updated_at: Date?
+
+    init(
+        id: UUID,
+        language_id: UUID,
+        lemma: String,
+        transliteration: String? = nil,
+        pronunciation_ipa: String? = nil,
+        pronunciation_guidance: String? = nil,
+        part_of_speech: String? = nil,
+        cefr_level: String? = nil,
+        frequency_rank: Int? = nil,
+        definition: String,
+        usage_notes: String? = nil,
+        language_variant: String? = nil,
+        enrichment_source: String? = nil,
+        enrichment_updated_at: Date? = nil
+    ) {
+        self.id = id
+        self.language_id = language_id
+        self.lemma = lemma
+        self.transliteration = transliteration
+        self.pronunciation_ipa = pronunciation_ipa
+        self.pronunciation_guidance = pronunciation_guidance
+        self.part_of_speech = part_of_speech
+        self.cefr_level = cefr_level
+        self.frequency_rank = frequency_rank
+        self.definition = definition
+        self.usage_notes = usage_notes
+        self.language_variant = language_variant
+        self.enrichment_source = enrichment_source
+        self.enrichment_updated_at = enrichment_updated_at
+    }
 }
 
 struct ExampleSentenceDTO: Decodable {
@@ -27,6 +63,23 @@ struct ExampleSentenceDTO: Decodable {
     let sentence: String
     let translation: String
     let order_index: Int
+    let source: String?
+
+    init(
+        id: UUID,
+        word_id: UUID,
+        sentence: String,
+        translation: String,
+        order_index: Int,
+        source: String? = nil
+    ) {
+        self.id = id
+        self.word_id = word_id
+        self.sentence = sentence
+        self.translation = translation
+        self.order_index = order_index
+        self.source = source
+    }
 }
 
 struct WordAudioDTO: Decodable {
@@ -36,6 +89,31 @@ struct WordAudioDTO: Decodable {
     let speed: String
     let audio_url: String
     let duration_ms: Int?
+    let source: String?
+    let speaker_label: String?
+    let provider_reference: String?
+
+    init(
+        id: UUID,
+        word_id: UUID,
+        accent: String,
+        speed: String,
+        audio_url: String,
+        duration_ms: Int? = nil,
+        source: String? = nil,
+        speaker_label: String? = nil,
+        provider_reference: String? = nil
+    ) {
+        self.id = id
+        self.word_id = word_id
+        self.accent = accent
+        self.speed = speed
+        self.audio_url = audio_url
+        self.duration_ms = duration_ms
+        self.source = source
+        self.speaker_label = speaker_label
+        self.provider_reference = provider_reference
+    }
 }
 
 struct WordWithRelationsDTO: Decodable {
@@ -43,14 +121,54 @@ struct WordWithRelationsDTO: Decodable {
     let lemma: String
     let transliteration: String?
     let pronunciation_ipa: String?
+    let pronunciation_guidance: String?
     let part_of_speech: String?
     let cefr_level: String?
     let frequency_rank: Int?
     let definition: String
     let usage_notes: String?
+    let language_variant: String?
+    let enrichment_source: String?
+    let enrichment_updated_at: Date?
     let language: LanguageDTO?
     let example_sentences: [ExampleSentenceDTO]
     let word_audio: [WordAudioDTO]
+
+    init(
+        id: UUID,
+        lemma: String,
+        transliteration: String? = nil,
+        pronunciation_ipa: String? = nil,
+        pronunciation_guidance: String? = nil,
+        part_of_speech: String? = nil,
+        cefr_level: String? = nil,
+        frequency_rank: Int? = nil,
+        definition: String,
+        usage_notes: String? = nil,
+        language_variant: String? = nil,
+        enrichment_source: String? = nil,
+        enrichment_updated_at: Date? = nil,
+        language: LanguageDTO? = nil,
+        example_sentences: [ExampleSentenceDTO] = [],
+        word_audio: [WordAudioDTO] = []
+    ) {
+        self.id = id
+        self.lemma = lemma
+        self.transliteration = transliteration
+        self.pronunciation_ipa = pronunciation_ipa
+        self.pronunciation_guidance = pronunciation_guidance
+        self.part_of_speech = part_of_speech
+        self.cefr_level = cefr_level
+        self.frequency_rank = frequency_rank
+        self.definition = definition
+        self.usage_notes = usage_notes
+        self.language_variant = language_variant
+        self.enrichment_source = enrichment_source
+        self.enrichment_updated_at = enrichment_updated_at
+        self.language = language
+        self.example_sentences = example_sentences
+        self.word_audio = word_audio
+    }
 }
 
 struct DailyWordAssignmentDTO: Decodable {
@@ -145,6 +263,10 @@ struct ProfileDTO: Decodable {
 
 struct ProfileLanguageSelectionDTO: Decodable {
     let active_language_id: UUID?
+}
+
+struct ProfileAccentSelectionDTO: Decodable {
+    let preferred_accent: String?
 }
 
 struct NotificationPreferenceDTO: Decodable {
@@ -276,7 +398,8 @@ extension WordWithRelationsDTO {
                         id: $0.id,
                         sentence: $0.sentence,
                         translation: $0.translation,
-                        order: $0.order_index
+                        order: $0.order_index,
+                        source: $0.source
                     )
                 },
             audio: word_audio
@@ -287,9 +410,17 @@ extension WordWithRelationsDTO {
                         accent: $0.accent,
                         speed: $0.speed,
                         url: URL(string: $0.audio_url) ?? URL(fileURLWithPath: "/"),
-                        durationMS: $0.duration_ms ?? 0
+                        durationMS: $0.duration_ms ?? 0,
+                        source: $0.source,
+                        speakerLabel: $0.speaker_label,
+                        providerReference: $0.provider_reference
                     )
-                }
+                },
+            supplementalDefinition: nil,
+            pronunciationGuidance: pronunciation_guidance,
+            languageVariant: language_variant,
+            enrichmentSources: enrichment_source.map { [$0] },
+            enrichmentUpdatedAt: enrichment_updated_at
         )
     }
 

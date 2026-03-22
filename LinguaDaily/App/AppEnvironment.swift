@@ -8,6 +8,9 @@ struct AppEnvironment {
     let revenueCatKey: String?
     let sentryDSN: String?
     let googleClientID: String?
+    let forvoAPIKey: String?
+    let googleTextToSpeechAPIKey: String?
+    let googleTextToSpeechVoiceName: String?
 
     var supabaseConfig: SupabaseConfig? {
         guard let supabaseURL, let supabaseAnonKey, supabaseURL.host != nil else {
@@ -24,7 +27,20 @@ struct AppEnvironment {
             posthogHost: resolvedValue(infoKey: "PostHogHost", envKey: "POSTHOG_HOST", bundle: bundle, processInfo: processInfo),
             revenueCatKey: resolvedValue(infoKey: "RevenueCatAPIKey", envKey: "REVENUECAT_API_KEY", bundle: bundle, processInfo: processInfo),
             sentryDSN: resolvedValue(infoKey: "SentryDSN", envKey: "SENTRY_DSN", bundle: bundle, processInfo: processInfo),
-            googleClientID: resolvedValue(infoKey: "GoogleClientID", envKey: "GOOGLE_CLIENT_ID", bundle: bundle, processInfo: processInfo)
+            googleClientID: resolvedValue(infoKey: "GoogleClientID", envKey: "GOOGLE_CLIENT_ID", bundle: bundle, processInfo: processInfo),
+            forvoAPIKey: resolvedValue(infoKey: "ForvoAPIKey", envKey: "FORVO_API_KEY", bundle: bundle, processInfo: processInfo),
+            googleTextToSpeechAPIKey: resolvedValue(
+                infoKey: "GoogleTextToSpeechAPIKey",
+                envKey: "GOOGLE_TTS_API_KEY",
+                bundle: bundle,
+                processInfo: processInfo
+            ),
+            googleTextToSpeechVoiceName: resolvedValue(
+                infoKey: "GoogleTextToSpeechVoiceName",
+                envKey: "GOOGLE_TTS_VOICE_NAME",
+                bundle: bundle,
+                processInfo: processInfo
+            )
         )
     }
 

@@ -1,6 +1,6 @@
 import Foundation
 
-struct DailyLesson: Identifiable, Codable, Hashable {
+struct DailyLesson: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
     let assignmentDate: Date
     let dayNumber: Int
@@ -11,7 +11,7 @@ struct DailyLesson: Identifiable, Codable, Hashable {
     var isSavedForReview: Bool
 }
 
-struct WordProgressState: Codable, Hashable {
+struct WordProgressState: Codable, Hashable, Sendable {
     let status: WordStatus
     let isLearned: Bool
     let isFavorited: Bool

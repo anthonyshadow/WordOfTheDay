@@ -3,31 +3,43 @@ import Supabase
 
 final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
     private let client: SupabaseClient
+    private let cacheStore: LocalCacheStore?
+    private let enrichmentCoordinator: WordEnrichmentCoordinating?
     private let assigner = DailyWordAssigner()
 
-    init(config: SupabaseConfig) {
+    init(
+        config: SupabaseConfig,
+        cacheStore: LocalCacheStore? = nil,
+        enrichmentCoordinator: WordEnrichmentCoordinating? = nil
+    ) {
         self.client = SupabaseClient(supabaseURL: config.projectURL, supabaseKey: config.anonKey)
+        self.cacheStore = cacheStore
+        self.enrichmentCoordinator = enrichmentCoordinator
     }
 
     func fetchTodayLesson() async throws -> DailyLesson {
-        let userID = try await currentUserID()
-        let today = Date()
-        let todayKey = SupabaseFieldParser.sqlDateString(from: today)
-
-        if let assignment = try await fetchAssignment(userID: userID, assignmentDateKey: todayKey) {
-            let progress = try await fetchProgress(userID: userID, wordID: assignment.word.id)
-            let dayNumber = try await fetchAssignmentCount(userID: userID)
-            return Self.makeLesson(
-                assignmentID: assignment.id,
-                assignmentDateKey: assignment.assignment_date,
-                dayNumber: max(dayNumber, 1),
-                word: assignment.word,
-                progress: progress,
-                fallbackDate: today
+        do {
+            let userID = try await currentUserID()
+            let today = Date()
+            let todayKey = SupabaseFieldParser.sqlDateString(from: today)
+            let lesson = try await fetchBaseTodayLesson(
+                userID: userID,
+                today: today,
+                assignmentDateKey: todayKey
             )
-        }
 
-        return try await createLessonForToday(userID: userID, today: today, assignmentDateKey: todayKey)
+            guard let enrichmentCoordinator else {
+                return lesson
+            }
+
+            let preferredAccent = try? await fetchPreferredAccent(userID: userID)
+            return await enrichmentCoordinator.enrich(lesson, preferredAccent: preferredAccent)
+        } catch {
+            if let cachedLesson = await loadCachedLesson(for: .now) {
+                return cachedLesson
+            }
+            throw error
+        }
     }
 
     func updateLessonState(wordID: UUID, isLearned: Bool?, isFavorited: Bool?, isSavedForReview: Bool?) async throws {
@@ -100,6 +112,23 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
             limit: limit
         )
         .map { $0.toModel() }
+    }
+
+    private func fetchBaseTodayLesson(userID: UUID, today: Date, assignmentDateKey: String) async throws -> DailyLesson {
+        if let assignment = try await fetchAssignment(userID: userID, assignmentDateKey: assignmentDateKey) {
+            let progress = try await fetchProgress(userID: userID, wordID: assignment.word.id)
+            let dayNumber = try await fetchAssignmentCount(userID: userID)
+            return Self.makeLesson(
+                assignmentID: assignment.id,
+                assignmentDateKey: assignment.assignment_date,
+                dayNumber: max(dayNumber, 1),
+                word: assignment.word,
+                progress: progress,
+                fallbackDate: today
+            )
+        }
+
+        return try await createLessonForToday(userID: userID, today: today, assignmentDateKey: assignmentDateKey)
     }
 
     private func createLessonForToday(userID: UUID, today: Date, assignmentDateKey: String) async throws -> DailyLesson {
@@ -376,6 +405,31 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
         }
     }
 
+    private func fetchPreferredAccent(userID: UUID) async throws -> String? {
+        do {
+            let profiles: [ProfileAccentSelectionDTO] = try await client
+                .from("profiles")
+                .select("preferred_accent")
+                .eq("id", value: userID)
+                .limit(1)
+                .execute()
+                .value
+            return profiles.first?.preferred_accent
+        } catch {
+            throw normalize(error)
+        }
+    }
+
+    private func loadCachedLesson(for date: Date) async -> DailyLesson? {
+        guard let cacheStore else {
+            return nil
+        }
+
+        return await MainActor.run {
+            try? cacheStore.loadDailyLesson(for: date)
+        }
+    }
+
     private func normalize(_ error: Error) -> AppError {
         if let appError = error as? AppError {
             return appError
@@ -391,11 +445,15 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
         lemma,
         transliteration,
         pronunciation_ipa,
+        pronunciation_guidance,
         part_of_speech,
         cefr_level,
         frequency_rank,
         definition,
         usage_notes,
+        language_variant,
+        enrichment_source,
+        enrichment_updated_at,
         language:languages!words_language_id_fkey(
             id,
             code,
@@ -408,7 +466,8 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
             word_id,
             sentence,
             translation,
-            order_index
+            order_index,
+            source
         ),
         word_audio(
             id,
@@ -416,7 +475,10 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
             accent,
             speed,
             audio_url,
-            duration_ms
+            duration_ms,
+            source,
+            speaker_label,
+            provider_reference
         )
         """
     }

@@ -9,24 +9,27 @@ protocol DailyLessonCaching {
 
 @MainActor
 final class LocalCacheStore: DailyLessonCaching {
+    private let modelContainer: ModelContainer?
     private let modelContext: ModelContext
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, modelContainer: ModelContainer? = nil) {
+        self.modelContainer = modelContainer
         self.modelContext = modelContext
         encoder.dateEncodingStrategy = .iso8601
         decoder.dateDecodingStrategy = .iso8601
+    }
+
+    convenience init(modelContainer: ModelContainer) {
+        self.init(modelContext: modelContainer.mainContext, modelContainer: modelContainer)
     }
 
     func saveDailyLesson(_ lesson: DailyLesson, for date: Date = .now) throws {
         let key = Self.dateKey(from: date)
         let data = try encoder.encode(lesson)
 
-        let descriptor = FetchDescriptor<CachedDailyLessonEntity>(
-            predicate: #Predicate { $0.assignmentDateKey == key }
-        )
-        if let existing = try modelContext.fetch(descriptor).first {
+        if let existing = try fetchCachedDailyLessons().first(where: { $0.assignmentDateKey == key }) {
             existing.payload = data
             existing.updatedAt = .now
         } else {
@@ -38,10 +41,7 @@ final class LocalCacheStore: DailyLessonCaching {
 
     func loadDailyLesson(for date: Date = .now) throws -> DailyLesson? {
         let key = Self.dateKey(from: date)
-        let descriptor = FetchDescriptor<CachedDailyLessonEntity>(
-            predicate: #Predicate { $0.assignmentDateKey == key }
-        )
-        guard let entity = try modelContext.fetch(descriptor).first else {
+        guard let entity = try fetchCachedDailyLessons().first(where: { $0.assignmentDateKey == key }) else {
             return nil
         }
         return try decoder.decode(DailyLesson.self, from: entity.payload)
@@ -49,10 +49,7 @@ final class LocalCacheStore: DailyLessonCaching {
 
     func upsertArchiveMetadata(_ words: [ArchiveWord]) throws {
         for row in words {
-            let descriptor = FetchDescriptor<CachedWordMetadataEntity>(
-                predicate: #Predicate { $0.wordID == row.word.id }
-            )
-            if let existing = try modelContext.fetch(descriptor).first {
+            if let existing = try fetchCachedWordMetadata().first(where: { $0.wordID == row.word.id }) {
                 existing.lemma = row.word.lemma
                 existing.statusRaw = row.status.rawValue
                 existing.isFavorited = row.isFavorited
@@ -73,10 +70,42 @@ final class LocalCacheStore: DailyLessonCaching {
     }
 
     func loadArchiveMetadata() throws -> [CachedWordMetadataEntity] {
-        let descriptor = FetchDescriptor<CachedWordMetadataEntity>(
-            sortBy: [SortDescriptor(\CachedWordMetadataEntity.updatedAt, order: .reverse)]
-        )
-        return try modelContext.fetch(descriptor)
+        try fetchCachedWordMetadata().sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    func saveWordEnrichment(_ enrichment: WordEnrichmentSnapshot, for wordID: UUID) throws {
+        let data = try encoder.encode(enrichment)
+
+        if let existing = try fetchCachedWordEnrichments().first(where: { $0.wordID == wordID }) {
+            existing.payload = data
+            existing.updatedAt = .now
+        } else {
+            modelContext.insert(CachedWordEnrichmentEntity(wordID: wordID, payload: data))
+        }
+
+        try modelContext.save()
+    }
+
+    func loadWordEnrichment(for wordID: UUID) throws -> CachedWordEnrichment? {
+        guard let entity = try fetchCachedWordEnrichments().first(where: { $0.wordID == wordID }) else {
+            return nil
+        }
+
+        let payload = try decoder.decode(WordEnrichmentSnapshot.self, from: entity.payload)
+        return CachedWordEnrichment(wordID: wordID, payload: payload, cachedAt: entity.updatedAt)
+    }
+
+    func removeExpiredWordEnrichments(olderThan cutoffDate: Date) throws {
+        let descriptor = FetchDescriptor<CachedWordEnrichmentEntity>()
+        let entities = try modelContext.fetch(descriptor)
+
+        for entity in entities where entity.updatedAt < cutoffDate {
+            modelContext.delete(entity)
+        }
+
+        if modelContext.hasChanges {
+            try modelContext.save()
+        }
     }
 
     private static func dateKey(from date: Date) -> String {
@@ -86,5 +115,17 @@ final class LocalCacheStore: DailyLessonCaching {
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
+    }
+
+    private func fetchCachedDailyLessons() throws -> [CachedDailyLessonEntity] {
+        try modelContext.fetch(FetchDescriptor<CachedDailyLessonEntity>())
+    }
+
+    private func fetchCachedWordMetadata() throws -> [CachedWordMetadataEntity] {
+        try modelContext.fetch(FetchDescriptor<CachedWordMetadataEntity>())
+    }
+
+    private func fetchCachedWordEnrichments() throws -> [CachedWordEnrichmentEntity] {
+        try modelContext.fetch(FetchDescriptor<CachedWordEnrichmentEntity>())
     }
 }

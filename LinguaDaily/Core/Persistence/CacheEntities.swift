@@ -39,3 +39,16 @@ final class CachedWordMetadataEntity {
         self.updatedAt = updatedAt
     }
 }
+
+@Model
+final class CachedWordEnrichmentEntity {
+    @Attribute(.unique) var wordID: UUID
+    var payload: Data
+    var updatedAt: Date
+
+    init(wordID: UUID, payload: Data, updatedAt: Date = .now) {
+        self.wordID = wordID
+        self.payload = payload
+        self.updatedAt = updatedAt
+    }
+}

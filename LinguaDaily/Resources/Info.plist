@@ -58,6 +58,12 @@
     <string>$(SENTRY_DSN)</string>
     <key>GoogleClientID</key>
     <string>$(GOOGLE_CLIENT_ID)</string>
+    <key>ForvoAPIKey</key>
+    <string>$(FORVO_API_KEY)</string>
+    <key>GoogleTextToSpeechAPIKey</key>
+    <string>$(GOOGLE_TTS_API_KEY)</string>
+    <key>GoogleTextToSpeechVoiceName</key>
+    <string>$(GOOGLE_TTS_VOICE_NAME)</string>
     <key>NSCameraUsageDescription</key>
     <string>LinguaDaily uses the camera to capture printed text for translation.</string>
     <key>NSMicrophoneUsageDescription</key>

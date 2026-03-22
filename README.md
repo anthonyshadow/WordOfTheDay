@@ -4,6 +4,7 @@ LinguaDaily is an iPhone-first SwiftUI language-learning app built around one da
 
 ## Current status
 - Core product flows are live against Supabase: email auth, onboarding sync, daily lessons, review, archive, profile, settings, and progress.
+- Daily lesson enrichment is live app-side with Wiktionary metadata, Forvo native-speaker pronunciation lookup, Google Cloud Text-to-Speech fallback, and resilient offline caching.
 - Translate v1 is implemented with text, voice, and camera translation plus saved/favorited translation library flows backed by Supabase.
 - PostHog and Sentry are integrated in the app and loaded from local config.
 - RevenueCat is wired app-side with a safe free-tier fallback when its key or products are not configured yet.
@@ -14,6 +15,8 @@ LinguaDaily is an iPhone-first SwiftUI language-learning app built around one da
 - Onboarding synced to remote `profiles` and `notification_preferences`
 - Live language picker backed by Supabase
 - Daily lesson assignment, word detail actions, related words, review queue, archive, and progress metrics from the live backend
+- Daily lesson enrichment that keeps Supabase as the primary source of truth, then layers in Wiktionary definitions/examples/pronunciation notes, Forvo audio, and Google TTS fallback without breaking the base lesson flow
+- Idempotent persistence of newly discovered externally sourced words back into Supabase using normalized lemma + language matching
 - Editable profile data saved to Supabase
 - Settings for reminders, preferred accent, daily learning mode, and appearance saved to Supabase
 - Streaks and best retention category computed from real backend activity instead of placeholder values
@@ -21,7 +24,15 @@ LinguaDaily is an iPhone-first SwiftUI language-learning app built around one da
 - Local notification scheduling plus APNs device-token persistence hook once iOS provides a token
 - PostHog capture with identify/reset and basic sensitive-field redaction
 - Sentry crash/error reporting with user binding, redaction, and a debug test event
-- Offline-friendly lesson caching via SwiftData fallback
+- Offline-friendly lesson caching via SwiftData fallback, including a 7-day cache for enriched word metadata and pronunciation references
+
+## Daily lesson enrichment
+- Supabase still provides the base lesson and remains the primary source of truth.
+- When `fetchTodayLesson()` succeeds online, the app launches Wiktionary, Forvo, and Google TTS requests in parallel where appropriate, with a 5-second timeout per provider call.
+- Provider failures are isolated. If one or all enrichment providers fail, the app still returns the base lesson instead of surfacing an app-breaking error.
+- Enrichment results are cached locally in SwiftData for 7 days so previously enriched content can still be served offline.
+- If external enrichment returns a valid word for a language that does not already exist in Supabase, the app persists it through the `upsert_external_word` RPC using conservative lemma normalization and duplicate prevention.
+- Google TTS audio is used as a fallback when Forvo does not return a usable pronunciation track. TTS-generated local files are cached for device playback, while only remotely hosted audio references are persisted back to Supabase.
 
 ## Seeded languages
 The repo currently seeds these live languages into Supabase:
@@ -40,6 +51,7 @@ Each seeded language currently includes starter words, example sentences, and au
 - XcodeGen for project generation
 - Supabase Auth + Postgres
 - SwiftData for local caching
+- URLSession-based provider integrations for Wiktionary, Forvo, and Google Cloud Text-to-Speech
 - PostHog, Sentry, RevenueCat
 
 ## Repository layout
@@ -67,7 +79,7 @@ npm install
 cp Config/Environment.xcconfig.template Config/Environment.xcconfig
 ```
 
-3. Fill in the values in [`Config/Environment.xcconfig`](/Users/anthonyshadowitz/Desktop/WordApp/Config/Environment.xcconfig).
+3. Fill in the values in [`Config/Environment.xcconfig`](/Users/anthonyshadowitz/Desktop/WordApp/Config/Environment.xcconfig). `FORVO_API_KEY` and `GOOGLE_TTS_API_KEY` are optional, but leaving them empty disables those provider paths.
 
 4. Generate the Xcode project:
 
@@ -90,6 +102,9 @@ For Translate specifically, the simulator is still useful for builds and unit te
 - `SENTRY_DSN`: optional but recommended for crash/error reporting
 - `SENTRY_AUTH_TOKEN`: optional, only needed if you want Xcode builds to upload dSYMs with `sentry-cli`
 - `GOOGLE_CLIENT_ID`: reserved for future Google Sign-In setup
+- `FORVO_API_KEY`: optional, enables native-speaker pronunciation lookup from Forvo
+- `GOOGLE_TTS_API_KEY`: optional, enables Google Cloud Text-to-Speech pronunciation fallback when Forvo has no usable audio
+- `GOOGLE_TTS_VOICE_NAME`: optional, lets you pin a specific Google Cloud TTS voice such as `es-ES-Standard-A`
 
 Keep URL-style values quoted exactly like the template. In `.xcconfig` files, unquoted `https://...` values can be truncated because of `//` parsing.
 
@@ -120,6 +135,8 @@ npm run db:migrations
 npm run db:push
 ```
 
+The current daily lesson enrichment flow expects the additive migration [`20260322193000_add_word_enrichment_support.sql`](/Users/anthonyshadowitz/Desktop/WordApp/supabase/migrations/20260322193000_add_word_enrichment_support.sql) to be applied. It adds normalized lemma support, enrichment columns, and the `upsert_external_word` RPC used for safe new-word persistence.
+
 If your remote database already contains schema objects from an earlier manual setup, you may need `supabase migration repair --linked --status applied <version>` before pushing. The dedicated Supabase notes live in [`supabase/README.md`](/Users/anthonyshadowitz/Desktop/WordApp/supabase/README.md).
 
 ## Running and testing
@@ -129,11 +146,14 @@ Run the app from Xcode with the `LinguaDaily` scheme, or run tests from the comm
 xcodebuild -scheme LinguaDaily -project /Users/anthonyshadowitz/Desktop/WordApp/LinguaDaily.xcodeproj -destination 'platform=iOS Simulator,OS=26.3.1,name=iPhone 17' test
 ```
 
-The current suite covers auth, onboarding, notifications, profile, settings, daily lesson, word detail, review, archive, progress, translate flows, analytics/crash wiring, subscriptions, and domain logic.
+The current suite covers auth, onboarding, notifications, profile, settings, daily lesson, word detail, review, archive, progress, translate flows, analytics/crash wiring, subscriptions, domain logic, and the new enrichment clients/coordinator/cache/persistence paths.
 
 ## Provider status
-Configured now:
+Integrated app-side now:
 - Supabase
+- Wiktionary
+- Forvo
+- Google Cloud Text-to-Speech
 - PostHog
 - Sentry
 - RevenueCat app-side wrapper and paywall flow

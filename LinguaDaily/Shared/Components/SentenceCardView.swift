@@ -9,9 +9,11 @@ struct SentenceCardView: View {
                 Text(sentence.sentence)
                     .font(LDTypography.body())
                     .foregroundStyle(LDColor.inkPrimary)
-                Text(sentence.translation)
-                    .font(LDTypography.caption())
-                    .foregroundStyle(LDColor.inkSecondary)
+                if sentence.hasTranslation {
+                    Text(sentence.translation)
+                        .font(LDTypography.caption())
+                        .foregroundStyle(LDColor.inkSecondary)
+                }
             }
         }
     }
