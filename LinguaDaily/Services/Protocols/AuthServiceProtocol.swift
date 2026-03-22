@@ -13,4 +13,5 @@ protocol AuthServiceProtocol {
     func signInWithApple() async throws -> AuthSession
     func signInWithGoogle() async throws -> AuthSession
     func signOut() async throws
+    func deleteAccount() async throws
 }

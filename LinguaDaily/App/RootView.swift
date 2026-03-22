@@ -37,11 +37,21 @@ struct RootView: View {
             .navigationDestination(for: AppDestination.self) { destination in
                 switch destination {
                 case let .wordDetail(word):
-                    WordDetailView(word: word)
+                    WordDetailView(
+                        viewModel: WordDetailViewModel(
+                            word: word,
+                            lessonService: dependencies.dailyLessonService,
+                            progressService: dependencies.progressService,
+                            audioPlayer: dependencies.audioPlayerService,
+                            analytics: dependencies.analyticsService,
+                            crash: dependencies.crashService
+                        )
+                    )
                 case .settings:
                     SettingsView(
                         viewModel: SettingsViewModel(
                             notificationService: dependencies.notificationService,
+                            progressService: dependencies.progressService,
                             authService: dependencies.authService,
                             onboardingService: dependencies.onboardingService,
                             analytics: dependencies.analyticsService,

@@ -86,7 +86,9 @@ final class SupabaseDataMappingTests: XCTestCase {
         let profile = SupabaseProgressService.makeUserProfile(
             profile: nil,
             notificationPreference: NotificationPreferenceDTO(reminder_time: "07:30:00", timezone: "America/Toronto"),
-            user: user
+            user: user,
+            currentStreakDays: 4,
+            bestStreakDays: 9
         )
 
         XCTAssertEqual(profile.displayName, "Alex Carter")
@@ -95,6 +97,8 @@ final class SupabaseDataMappingTests: XCTestCase {
         XCTAssertEqual(Calendar.current.component(.hour, from: profile.reminderTime), 7)
         XCTAssertEqual(profile.learningGoal, .travel)
         XCTAssertEqual(profile.level, .beginner)
+        XCTAssertEqual(profile.currentStreakDays, 4)
+        XCTAssertEqual(profile.bestStreakDays, 9)
     }
 
     func testMakeWeeklyActivityBucketsReviewEventsIntoCurrentWeek() {
@@ -108,14 +112,16 @@ final class SupabaseDataMappingTests: XCTestCase {
                 total_reviews: 1,
                 correct_reviews: 1,
                 learned_at: monday,
-                last_reviewed_at: nil
+                last_reviewed_at: nil,
+                word: ProgressMetricsWordDTO(part_of_speech: "noun")
             ),
             ProgressMetricsDTO(
                 status: .reviewDue,
                 total_reviews: 2,
                 correct_reviews: 1,
                 learned_at: nil,
-                last_reviewed_at: calendar.date(byAdding: .day, value: 2, to: monday)
+                last_reviewed_at: calendar.date(byAdding: .day, value: 2, to: monday),
+                word: ProgressMetricsWordDTO(part_of_speech: "verb")
             )
         ]
 
@@ -141,8 +147,13 @@ final class SupabaseDataMappingTests: XCTestCase {
             activeLanguage: SampleData.french,
             learningGoal: .work,
             level: .intermediate,
+            preferredAccent: "parisian",
+            dailyLearningMode: .balanced,
+            appearancePreference: .system,
             reminderTime: reminder,
             timezoneIdentifier: "America/Toronto",
+            currentStreakDays: 6,
+            bestStreakDays: 12,
             joinedAt: Date(timeIntervalSince1970: 1_700_000_000)
         )
 
@@ -187,6 +198,63 @@ final class SupabaseDataMappingTests: XCTestCase {
         XCTAssertEqual(payload?.reminder_time, "08:30:00")
         XCTAssertEqual(payload?.timezone, "America/Toronto")
         XCTAssertNotNil(payload?.onboarding_completed_at)
+    }
+
+    func testCalculateStreaksComputesCurrentAndBestRuns() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let referenceDate = calendar.date(from: DateComponents(year: 2026, month: 3, day: 22))!
+        let assignmentDates = [
+            calendar.date(from: DateComponents(year: 2026, month: 3, day: 18))!,
+            calendar.date(from: DateComponents(year: 2026, month: 3, day: 19))!,
+            calendar.date(from: DateComponents(year: 2026, month: 3, day: 21))!,
+            calendar.date(from: DateComponents(year: 2026, month: 3, day: 22))!
+        ]
+
+        let streaks = SupabaseProgressService.calculateStreaks(
+            assignmentDates: assignmentDates,
+            calendar: calendar,
+            referenceDate: referenceDate
+        )
+
+        XCTAssertEqual(streaks.current, 2)
+        XCTAssertEqual(streaks.best, 2)
+    }
+
+    func testBestRetentionCategoryUsesActualPartOfSpeechMetrics() {
+        let metrics = [
+            ProgressMetricsDTO(
+                status: .mastered,
+                total_reviews: 6,
+                correct_reviews: 6,
+                learned_at: Date(timeIntervalSince1970: 1_700_000_000),
+                last_reviewed_at: Date(timeIntervalSince1970: 1_700_010_000),
+                word: ProgressMetricsWordDTO(part_of_speech: "verb")
+            ),
+            ProgressMetricsDTO(
+                status: .mastered,
+                total_reviews: 5,
+                correct_reviews: 5,
+                learned_at: Date(timeIntervalSince1970: 1_700_020_000),
+                last_reviewed_at: Date(timeIntervalSince1970: 1_700_030_000),
+                word: ProgressMetricsWordDTO(part_of_speech: "verb")
+            ),
+            ProgressMetricsDTO(
+                status: .learned,
+                total_reviews: 3,
+                correct_reviews: 2,
+                learned_at: Date(timeIntervalSince1970: 1_700_040_000),
+                last_reviewed_at: Date(timeIntervalSince1970: 1_700_050_000),
+                word: ProgressMetricsWordDTO(part_of_speech: "noun")
+            )
+        ]
+
+        let category = SupabaseProgressService.bestRetentionCategory(
+            from: metrics,
+            fallbackLanguageName: "Italian"
+        )
+
+        XCTAssertEqual(category, "Verbs")
     }
 
     private func makeWordDTO() -> WordWithRelationsDTO {

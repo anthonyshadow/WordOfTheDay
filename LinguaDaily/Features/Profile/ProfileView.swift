@@ -29,6 +29,59 @@ struct ProfileView: View {
         .task {
             await viewModel.load()
         }
+        .sheet(isPresented: $viewModel.isEditingProfile) {
+            NavigationStack {
+                Form {
+                    Section("Profile") {
+                        TextField("Display name", text: $viewModel.editDisplayName)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+
+                        Picker("Primary language", selection: selectedLanguageID) {
+                            ForEach(viewModel.availableLanguages) { language in
+                                Text(language.name).tag(Optional(language.id))
+                            }
+                        }
+
+                        Picker("Learning goal", selection: $viewModel.editLearningGoal) {
+                            ForEach(LearningGoal.allCases, id: \.self) { goal in
+                                Text(goal.title).tag(goal)
+                            }
+                        }
+
+                        Picker("Level", selection: $viewModel.editLevel) {
+                            ForEach(LearningLevel.allCases, id: \.self) { level in
+                                Text(level.title).tag(level)
+                            }
+                        }
+                    }
+
+                    if let editError = viewModel.editError {
+                        Section {
+                            LDErrorStateView(error: editError) {
+                                viewModel.clearEditError()
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("Edit Profile")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            viewModel.dismissProfileEditor()
+                        }
+                    }
+
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            Task { await viewModel.saveProfile() }
+                        }
+                        .disabled(viewModel.isSavingProfile || viewModel.editDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -42,7 +95,10 @@ struct ProfileView: View {
             }
         case .empty:
             LDEmptyStateView(title: "No profile", subtitle: "Sign in to continue.", actionTitle: nil, action: nil)
-        case let .success(profile):
+        case let .success(state):
+            let profile = state.profile
+            let progress = state.progress
+
             LDCard {
                 VStack(spacing: LDSpacing.sm) {
                     Text(String(profile.displayName.prefix(1)))
@@ -58,8 +114,10 @@ struct ProfileView: View {
                         .foregroundStyle(LDColor.inkSecondary)
                         .multilineTextAlignment(.center)
 
-                    Button("Edit Profile") {}
-                        .buttonStyle(LDSecondaryButtonStyle())
+                    Button("Edit Profile") {
+                        Task { await viewModel.beginEditingProfile() }
+                    }
+                    .buttonStyle(LDSecondaryButtonStyle())
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -68,13 +126,25 @@ struct ProfileView: View {
             infoRow(title: "Current level", value: profile.level.title)
             infoRow(title: "Daily time", value: profile.reminderTime.formatted(date: .omitted, time: .shortened))
             infoRow(title: "Plan", value: appState.subscriptionState.tier == .premium ? "Premium" : "Free")
-            infoRow(title: "Achievement summary", value: "12-day streak • First 50 words")
+            infoRow(
+                title: "Achievement summary",
+                value: "\(progress.currentStreakDays)-day streak • \(progress.wordsLearned) words learned"
+            )
 
             Button(appState.subscriptionState.tier == .premium ? "Manage subscription" : "Upgrade to premium") {
                 appState.path.append(.paywall)
             }
             .buttonStyle(LDPrimaryButtonStyle())
         }
+    }
+
+    private var selectedLanguageID: Binding<UUID?> {
+        Binding(
+            get: { viewModel.editSelectedLanguage?.id },
+            set: { languageID in
+                viewModel.editSelectedLanguage = viewModel.availableLanguages.first(where: { $0.id == languageID })
+            }
+        )
     }
 
     @ViewBuilder
@@ -96,8 +166,10 @@ struct ProfileView: View {
     return ProfileView(
         viewModel: ProfileViewModel(
             progressService: dependencies.progressService,
+            onboardingService: dependencies.onboardingService,
             analytics: dependencies.analyticsService,
-            crash: dependencies.crashService
+            crash: dependencies.crashService,
+            appState: dependencies.appState
         )
     )
     .environmentObject(dependencies.appState)

@@ -1,13 +1,20 @@
 import Foundation
 import Combine
 
+struct SettingsScreenState: Hashable {
+    var notificationPreference: NotificationPreference
+    var profile: UserProfile
+    var availableAccents: [String]
+}
+
 @MainActor
 final class SettingsViewModel: ObservableObject {
-    @Published var phase: AsyncPhase<NotificationPreference> = .idle
+    @Published var phase: AsyncPhase<SettingsScreenState> = .idle
     @Published var reminder = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date()
     @Published private(set) var sentryTestStatusMessage: String?
 
     private let notificationService: NotificationServiceProtocol
+    private let progressService: ProgressServiceProtocol
     private let authService: AuthServiceProtocol
     private let onboardingService: OnboardingServiceProtocol
     private let analytics: AnalyticsServiceProtocol
@@ -16,6 +23,7 @@ final class SettingsViewModel: ObservableObject {
 
     init(
         notificationService: NotificationServiceProtocol,
+        progressService: ProgressServiceProtocol,
         authService: AuthServiceProtocol,
         onboardingService: OnboardingServiceProtocol,
         analytics: AnalyticsServiceProtocol,
@@ -23,6 +31,7 @@ final class SettingsViewModel: ObservableObject {
         appState: AppState
     ) {
         self.notificationService = notificationService
+        self.progressService = progressService
         self.authService = authService
         self.onboardingService = onboardingService
         self.analytics = analytics
@@ -33,9 +42,20 @@ final class SettingsViewModel: ObservableObject {
     func load() async {
         phase = .loading
         do {
-            let preference = try await notificationService.loadPreference()
+            async let preferenceTask = notificationService.loadPreference()
+            async let profileTask = progressService.fetchProfile()
+            let profile = try await profileTask
+            let availableAccents = try await progressService.fetchAvailableAccents(languageID: profile.activeLanguage?.id)
+            let preference = try await preferenceTask
+
+            let state = SettingsScreenState(
+                notificationPreference: preference,
+                profile: profile,
+                availableAccents: availableAccents
+            )
             reminder = preference.reminderTime
-            phase = .success(preference)
+            appState.appearancePreference = profile.appearancePreference
+            phase = .success(state)
             analytics.track(.settingsOpened, properties: [:])
         } catch {
             crash.capture(error, context: ["feature": "settings_load"])
@@ -44,20 +64,38 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func toggleNotifications(_ enabled: Bool) async {
-        guard case var .success(preference) = phase else {
+        guard case var .success(state) = phase else {
             return
         }
-        preference.isEnabled = enabled
-        await savePreference(preference)
+        state.notificationPreference.isEnabled = enabled
+        await savePreference(state.notificationPreference, currentState: state)
     }
 
     func updateReminder(_ date: Date) async {
-        guard case var .success(preference) = phase else {
+        guard case var .success(state) = phase else {
             return
         }
-        preference.reminderTime = date
+        state.notificationPreference.reminderTime = date
         analytics.track(.reminderTimeSet, properties: ["source": "settings"])
-        await savePreference(preference)
+        await savePreference(state.notificationPreference, currentState: state)
+    }
+
+    func updatePreferredAccent(_ accent: String?) async {
+        await updateProfile(field: "preferred_accent") { profile in
+            profile.preferredAccent = accent
+        }
+    }
+
+    func updateDailyLearningMode(_ mode: DailyLearningMode) async {
+        await updateProfile(field: "daily_learning_mode") { profile in
+            profile.dailyLearningMode = mode
+        }
+    }
+
+    func updateAppearance(_ appearance: AppearancePreference) async {
+        await updateProfile(field: "appearance") { profile in
+            profile.appearancePreference = appearance
+        }
     }
 
     func logOut() async {
@@ -73,9 +111,9 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func deleteAccount() async {
-        // v1 stub: full backend delete-account workflow should remove auth user + profile + progress.
         do {
-            try await authService.signOut()
+            analytics.track(.accountDeleted, properties: [:])
+            try await authService.deleteAccount()
             try? onboardingService.saveOnboardingState(.empty)
             analytics.reset()
             crash.setUser(nil)
@@ -98,15 +136,56 @@ final class SettingsViewModel: ObservableObject {
         sentryTestStatusMessage = "Sent a handled Sentry test event. Check Sentry in a moment."
     }
 
-    private func savePreference(_ preference: NotificationPreference) async {
+    private func savePreference(_ preference: NotificationPreference, currentState: SettingsScreenState) async {
         do {
             try await notificationService.updatePreference(preference)
             if preference.isEnabled {
                 try await notificationService.scheduleLocalReminder(preference: preference)
             }
-            phase = .success(preference)
+
+            var nextState = currentState
+            nextState.notificationPreference = preference
+            phase = .success(nextState)
         } catch {
             crash.capture(error, context: ["feature": "settings_save_notification"])
+        }
+    }
+
+    private func updateProfile(
+        field: String,
+        mutate: (inout UserProfile) -> Void
+    ) async {
+        guard case let .success(state) = phase else {
+            return
+        }
+
+        var profile = state.profile
+        mutate(&profile)
+
+        do {
+            let updatedProfile = try await progressService.updateProfile(
+                UserProfileUpdateRequest(
+                    displayName: profile.displayName,
+                    activeLanguage: profile.activeLanguage,
+                    learningGoal: profile.learningGoal,
+                    level: profile.level,
+                    preferredAccent: profile.preferredAccent,
+                    dailyLearningMode: profile.dailyLearningMode,
+                    appearancePreference: profile.appearancePreference
+                )
+            )
+
+            let refreshedAccents = try await progressService.fetchAvailableAccents(languageID: updatedProfile.activeLanguage?.id)
+            let updatedState = SettingsScreenState(
+                notificationPreference: state.notificationPreference,
+                profile: updatedProfile,
+                availableAccents: refreshedAccents
+            )
+            appState.appearancePreference = updatedProfile.appearancePreference
+            phase = .success(updatedState)
+            analytics.track(.settingsUpdated, properties: ["field": field])
+        } catch {
+            crash.capture(error, context: ["feature": "settings_update_profile"])
         }
     }
 }

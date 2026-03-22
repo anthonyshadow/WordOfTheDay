@@ -5,3 +5,8 @@ struct NotificationPreference: Codable, Hashable {
     var reminderTime: Date
     var timezoneIdentifier: String
 }
+
+struct NotificationPreview: Codable, Hashable {
+    let title: String
+    let body: String
+}

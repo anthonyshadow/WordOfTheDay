@@ -44,6 +44,7 @@ final class OnboardingViewModel: ObservableObject {
     @Published var onboardingState: OnboardingState = .empty
     @Published var availableLanguages: [Language] = []
     @Published var languagePhase: AsyncPhase<[Language]> = .idle
+    @Published var notificationPreviewPhase: AsyncPhase<NotificationPreview> = .idle
     @Published var languageQuery = ""
 
     @Published var fullName = ""
@@ -156,6 +157,9 @@ final class OnboardingViewModel: ObservableObject {
         onboardingState.language = language
         persistState()
         analytics.track(.languageSelected, properties: ["language": language.code])
+        if step == .notifications {
+            Task { await reloadNotificationPreview() }
+        }
     }
 
     func updateLevel(_ level: LearningLevel) {
@@ -188,6 +192,17 @@ final class OnboardingViewModel: ObservableObject {
     func skipNotifications() {
         onboardingState.hasSeenNotificationEducation = true
         persistState()
+    }
+
+    func loadNotificationPreviewIfNeeded() async {
+        guard case .idle = notificationPreviewPhase else {
+            return
+        }
+        await reloadNotificationPreview()
+    }
+
+    func retryLoadingNotificationPreview() async {
+        await reloadNotificationPreview()
     }
 
     func submitEmailAuth() async {
@@ -320,6 +335,17 @@ final class OnboardingViewModel: ObservableObject {
 
         onboardingState.language = nil
         persistState()
+    }
+
+    private func reloadNotificationPreview() async {
+        notificationPreviewPhase = .loading
+        do {
+            let preview = try await notificationService.fetchPreviewNotification(language: onboardingState.language)
+            notificationPreviewPhase = .success(preview)
+        } catch {
+            crashReporter.capture(error, context: ["feature": "notification_preview"])
+            notificationPreviewPhase = .failure((error as? AppError)?.viewError ?? .generic)
+        }
     }
 
     private func persistState() {

@@ -23,4 +23,24 @@ final class StubDailyLessonService: DailyLessonServiceProtocol {
         }
         throw AppError.network("Word not found")
     }
+
+    func fetchWordProgressState(wordID: UUID) async throws -> WordProgressState {
+        guard lesson.word.id == wordID else {
+            return .empty
+        }
+
+        return WordProgressState(
+            status: lesson.isSavedForReview ? .reviewDue : (lesson.isLearned ? .learned : .new),
+            isLearned: lesson.isLearned,
+            isFavorited: lesson.isFavorited,
+            isSavedForReview: lesson.isSavedForReview
+        )
+    }
+
+    func fetchRelatedWords(wordID: UUID, limit: Int) async throws -> [Word] {
+        SampleData.words
+            .filter { $0.id != wordID }
+            .prefix(limit)
+            .map { $0 }
+    }
 }

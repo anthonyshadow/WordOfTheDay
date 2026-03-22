@@ -75,6 +75,7 @@ final class TestAuthService: AuthServiceProtocol {
     private(set) var signInCalls: [(email: String, password: String)] = []
     private(set) var signUpCalls: [(email: String, password: String, displayName: String?)] = []
     private(set) var signOutCallCount = 0
+    private(set) var deleteAccountCallCount = 0
 
     var restoreSessionResult: AuthSession?
     var signInResult: Result<AuthSession, Error> = .success(TestData.session())
@@ -82,6 +83,7 @@ final class TestAuthService: AuthServiceProtocol {
     var appleResult: Result<AuthSession, Error> = .success(TestData.session(email: "apple@example.com"))
     var googleResult: Result<AuthSession, Error> = .success(TestData.session(email: "google@example.com"))
     var signOutError: Error?
+    var deleteAccountError: Error?
 
     func restoreSession() async throws -> AuthSession? {
         restoreSessionResult
@@ -111,6 +113,13 @@ final class TestAuthService: AuthServiceProtocol {
             throw signOutError
         }
     }
+
+    func deleteAccount() async throws {
+        deleteAccountCallCount += 1
+        if let deleteAccountError {
+            throw deleteAccountError
+        }
+    }
 }
 
 final class TestNotificationService: NotificationServiceProtocol {
@@ -120,9 +129,14 @@ final class TestNotificationService: NotificationServiceProtocol {
         reminderTime: Date(timeIntervalSince1970: 1_700_000_000),
         timezoneIdentifier: "UTC"
     )
+    var preview = NotificationPreview(
+        title: "Your French word is ready: Bonjour",
+        body: "Tap to hear pronunciation and examples."
+    )
     var loadError: Error?
     var updateError: Error?
     var scheduleError: Error?
+    var previewError: Error?
 
     private(set) var updatedPreferences: [NotificationPreference] = []
     private(set) var scheduledPreferences: [NotificationPreference] = []
@@ -151,6 +165,13 @@ final class TestNotificationService: NotificationServiceProtocol {
             throw scheduleError
         }
         scheduledPreferences.append(preference)
+    }
+
+    func fetchPreviewNotification(language: Language?) async throws -> NotificationPreview {
+        if let previewError {
+            throw previewError
+        }
+        return preview
     }
 }
 
@@ -196,9 +217,13 @@ final class TestOnboardingService: OnboardingServiceProtocol {
 final class TestProgressService: ProgressServiceProtocol {
     var progressResult: Result<ProgressSnapshot, Error> = .success(SampleData.progress)
     var profileResult: Result<UserProfile, Error> = .success(SampleData.profile)
+    var updateProfileResult: Result<UserProfile, Error> = .success(SampleData.profile)
+    var availableAccentsResult: Result<[String], Error> = .success(["parisian", "standard"])
 
     private(set) var fetchProgressCallCount = 0
     private(set) var fetchProfileCallCount = 0
+    private(set) var updateProfileRequests: [UserProfileUpdateRequest] = []
+    private(set) var fetchAvailableAccentsCallCount = 0
 
     func fetchProgress() async throws -> ProgressSnapshot {
         fetchProgressCallCount += 1
@@ -208,6 +233,16 @@ final class TestProgressService: ProgressServiceProtocol {
     func fetchProfile() async throws -> UserProfile {
         fetchProfileCallCount += 1
         return try profileResult.get()
+    }
+
+    func updateProfile(_ request: UserProfileUpdateRequest) async throws -> UserProfile {
+        updateProfileRequests.append(request)
+        return try updateProfileResult.get()
+    }
+
+    func fetchAvailableAccents(languageID: UUID?) async throws -> [String] {
+        fetchAvailableAccentsCallCount += 1
+        return try availableAccentsResult.get()
     }
 }
 

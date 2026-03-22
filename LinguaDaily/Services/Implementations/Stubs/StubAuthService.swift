@@ -35,4 +35,8 @@ final class StubAuthService: AuthServiceProtocol {
     func signOut() async throws {
         currentSession = nil
     }
+
+    func deleteAccount() async throws {
+        currentSession = nil
+    }
 }

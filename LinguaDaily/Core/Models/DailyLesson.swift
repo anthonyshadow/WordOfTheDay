@@ -10,3 +10,17 @@ struct DailyLesson: Identifiable, Codable, Hashable {
     var isFavorited: Bool
     var isSavedForReview: Bool
 }
+
+struct WordProgressState: Codable, Hashable {
+    let status: WordStatus
+    let isLearned: Bool
+    let isFavorited: Bool
+    let isSavedForReview: Bool
+
+    static let empty = WordProgressState(
+        status: .new,
+        isLearned: false,
+        isFavorited: false,
+        isSavedForReview: false
+    )
+}

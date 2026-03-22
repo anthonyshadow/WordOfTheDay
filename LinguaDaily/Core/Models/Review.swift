@@ -5,6 +5,19 @@ enum WordStatus: String, Codable, CaseIterable, Hashable {
     case learned
     case reviewDue = "review_due"
     case mastered
+
+    var title: String {
+        switch self {
+        case .new:
+            return "New"
+        case .learned:
+            return "Learned"
+        case .reviewDue:
+            return "Review due"
+        case .mastered:
+            return "Mastered"
+        }
+    }
 }
 
 struct ReviewOption: Identifiable, Codable, Hashable {

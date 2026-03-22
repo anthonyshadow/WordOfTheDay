@@ -178,8 +178,13 @@ final class OnboardingViewModelTests: XCTestCase {
                 ),
                 learningGoal: .culture,
                 level: .intermediate,
+                preferredAccent: "tokyo",
+                dailyLearningMode: .reviewFocus,
+                appearancePreference: .dark,
                 reminderTime: Date(timeIntervalSince1970: 1_700_030_000),
                 timezoneIdentifier: "Asia/Tokyo",
+                currentStreakDays: 5,
+                bestStreakDays: 8,
                 joinedAt: Date(timeIntervalSince1970: 1_699_000_000)
             )
         )
@@ -207,6 +212,30 @@ final class OnboardingViewModelTests: XCTestCase {
             .authEmailLoginTapped,
             .authSuccess
         ])
+    }
+
+    func testLoadNotificationPreviewUsesSelectedLanguage() async {
+        let notificationService = TestNotificationService()
+        notificationService.preview = NotificationPreview(
+            title: "Your Italian word is ready: Ciao",
+            body: "Tap to hear it and save it for review."
+        )
+        let viewModel = makeViewModel(notificationService: notificationService)
+        viewModel.onboardingState.language = Language(
+            id: UUID(uuidString: "11111111-2222-3333-4444-555555555555")!,
+            code: "it",
+            name: "Italian",
+            nativeName: "Italiano",
+            isActive: true
+        )
+
+        await viewModel.loadNotificationPreviewIfNeeded()
+
+        guard case let .success(preview) = viewModel.notificationPreviewPhase else {
+            return XCTFail("Expected preview success phase")
+        }
+        XCTAssertEqual(preview.title, "Your Italian word is ready: Ciao")
+        XCTAssertEqual(preview.body, "Tap to hear it and save it for review.")
     }
 
     func testSubmitEmailLoginWithoutRemoteProfileKeepsOnboardingIncomplete() async {

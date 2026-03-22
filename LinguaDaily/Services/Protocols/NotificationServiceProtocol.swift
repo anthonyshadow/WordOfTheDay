@@ -5,4 +5,5 @@ protocol NotificationServiceProtocol {
     func loadPreference() async throws -> NotificationPreference
     func updatePreference(_ preference: NotificationPreference) async throws
     func scheduleLocalReminder(preference: NotificationPreference) async throws
+    func fetchPreviewNotification(language: Language?) async throws -> NotificationPreview
 }

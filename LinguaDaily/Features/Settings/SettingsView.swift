@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @StateObject private var viewModel: SettingsViewModel
     @EnvironmentObject private var appState: AppState
+    @Environment(\.openURL) private var openURL
     @State private var showDeleteConfirmation = false
 
     init(viewModel: SettingsViewModel) {
@@ -44,10 +45,10 @@ struct SettingsView: View {
             }
         case .empty:
             LDEmptyStateView(title: "No settings", subtitle: "Try again later.", actionTitle: nil, action: nil)
-        case let .success(preference):
+        case let .success(state):
             LDListRow {
                 Toggle(isOn: Binding(
-                    get: { preference.isEnabled },
+                    get: { state.notificationPreference.isEnabled },
                     set: { newValue in Task { await viewModel.toggleNotifications(newValue) } }
                 )) {
                     Text("Notifications")
@@ -70,10 +71,46 @@ struct SettingsView: View {
                 .datePickerStyle(.compact)
             }
 
-            settingsRow(title: "Preferred accent", value: "Parisian")
-            settingsRow(title: "Pronunciation speed", value: appState.subscriptionState.tier == .premium ? "Normal + slow" : "Normal")
-            settingsRow(title: "Daily learning mode", value: "1 new word + review")
-            settingsRow(title: "Appearance", value: "System")
+            Menu {
+                Button("Default") {
+                    Task { await viewModel.updatePreferredAccent(nil) }
+                }
+                ForEach(state.availableAccents, id: \.self) { accent in
+                    Button(accent.capitalized) {
+                        Task { await viewModel.updatePreferredAccent(accent) }
+                    }
+                }
+            } label: {
+                settingsRow(title: "Preferred accent", value: state.profile.preferredAccent?.capitalized ?? "Default")
+            }
+            .buttonStyle(.plain)
+
+            Menu {
+                ForEach(DailyLearningMode.allCases, id: \.self) { mode in
+                    Button(mode.title) {
+                        Task { await viewModel.updateDailyLearningMode(mode) }
+                    }
+                }
+            } label: {
+                settingsRow(title: "Daily learning mode", value: state.profile.dailyLearningMode.title)
+            }
+            .buttonStyle(.plain)
+
+            Menu {
+                ForEach(AppearancePreference.allCases, id: \.self) { appearance in
+                    Button(appearance.title) {
+                        Task { await viewModel.updateAppearance(appearance) }
+                    }
+                }
+            } label: {
+                settingsRow(title: "Appearance", value: state.profile.appearancePreference.title)
+            }
+            .buttonStyle(.plain)
+
+            settingsRow(
+                title: "Pronunciation speed",
+                value: appState.subscriptionState.tier == .premium ? "Normal + slow" : "Normal"
+            )
 
             Button {
                 appState.path.append(.paywall)
@@ -82,8 +119,23 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
 
-            settingsRow(title: "Privacy", value: "Data and account")
-            settingsRow(title: "Help and feedback", value: "Contact support")
+            Button {
+                if let url = URL(string: "https://linguadaily.app/privacy") {
+                    openURL(url)
+                }
+            } label: {
+                settingsRow(title: "Privacy", value: "Privacy policy")
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                if let url = URL(string: "mailto:support@linguadaily.app?subject=LinguaDaily%20Feedback") {
+                    openURL(url)
+                }
+            } label: {
+                settingsRow(title: "Help and feedback", value: "Email support")
+            }
+            .buttonStyle(.plain)
 
             Button("Log out") {
                 Task { await viewModel.logOut() }
@@ -142,6 +194,7 @@ struct SettingsView: View {
     return SettingsView(
         viewModel: SettingsViewModel(
             notificationService: dependencies.notificationService,
+            progressService: dependencies.progressService,
             authService: dependencies.authService,
             onboardingService: dependencies.onboardingService,
             analytics: dependencies.analyticsService,

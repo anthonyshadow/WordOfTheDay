@@ -6,6 +6,7 @@ protocol SupabaseAuthClientProtocol {
     func signIn(email: String, password: String) async throws -> AuthSession
     func signUp(email: String, password: String, metadata: [String: AnyJSON]) async throws -> AuthSession
     func signOut() async throws
+    func deleteAccount() async throws
 }
 
 final class SupabaseAuthService: AuthServiceProtocol {
@@ -62,6 +63,14 @@ final class SupabaseAuthService: AuthServiceProtocol {
     func signOut() async throws {
         do {
             try await client.signOut()
+        } catch {
+            throw normalize(error)
+        }
+    }
+
+    func deleteAccount() async throws {
+        do {
+            try await client.deleteAccount()
         } catch {
             throw normalize(error)
         }
@@ -129,6 +138,11 @@ private final class LiveSupabaseAuthClient: SupabaseAuthClientProtocol {
     }
 
     func signOut() async throws {
+        try await client.auth.signOut()
+    }
+
+    func deleteAccount() async throws {
+        _ = try await client.rpc("delete_account").execute()
         try await client.auth.signOut()
     }
 

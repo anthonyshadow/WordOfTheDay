@@ -2,7 +2,13 @@ import Foundation
 import SwiftData
 
 @MainActor
-final class LocalCacheStore {
+protocol DailyLessonCaching {
+    func saveDailyLesson(_ lesson: DailyLesson, for date: Date) throws
+    func loadDailyLesson(for date: Date) throws -> DailyLesson?
+}
+
+@MainActor
+final class LocalCacheStore: DailyLessonCaching {
     private let modelContext: ModelContext
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()

@@ -75,6 +75,33 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
         return word.toModel()
     }
 
+    func fetchWordProgressState(wordID: UUID) async throws -> WordProgressState {
+        let userID = try await currentUserID()
+        let progress = try await fetchProgress(userID: userID, wordID: wordID)
+        return Self.makeWordProgressState(progress: progress)
+    }
+
+    func fetchRelatedWords(wordID: UUID, limit: Int) async throws -> [Word] {
+        guard limit > 0, let referenceWord = try await fetchWord(wordID: wordID) else {
+            return []
+        }
+
+        guard let languageID = referenceWord.language?.id else {
+            return []
+        }
+
+        let words = try await fetchWords(languageID: languageID)
+        return Self.makeRelatedWords(
+            from: words,
+            referenceWordID: wordID,
+            partOfSpeech: referenceWord.part_of_speech,
+            cefrLevel: referenceWord.cefr_level,
+            frequencyRank: referenceWord.frequency_rank ?? .max,
+            limit: limit
+        )
+        .map { $0.toModel() }
+    }
+
     private func createLessonForToday(userID: UUID, today: Date, assignmentDateKey: String) async throws -> DailyLesson {
         let assignedWordIDs = try await fetchAssignedWordIDs(userID: userID)
         let languageID = try await resolveActiveLanguageID(userID: userID)
@@ -424,6 +451,15 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
         )
     }
 
+    static func makeWordProgressState(progress: UserWordProgressDTO?) -> WordProgressState {
+        WordProgressState(
+            status: progress?.status ?? .new,
+            isLearned: progress.map(Self.isLearned(progress:)) ?? false,
+            isFavorited: progress?.is_favorited ?? false,
+            isSavedForReview: progress?.is_saved_for_review ?? false
+        )
+    }
+
     static func mergeProgress(
         userID: UUID,
         wordID: UUID,
@@ -467,6 +503,45 @@ final class SupabaseDailyLessonService: DailyLessonServiceProtocol {
 
     private static func isLearned(progress: UserWordProgressDTO) -> Bool {
         progress.status != .new
+    }
+
+    private static func makeRelatedWords(
+        from words: [WordWithRelationsDTO],
+        referenceWordID: UUID,
+        partOfSpeech: String?,
+        cefrLevel: String?,
+        frequencyRank: Int,
+        limit: Int
+    ) -> [WordWithRelationsDTO] {
+        words
+            .filter { $0.id != referenceWordID }
+            .sorted { lhs, rhs in
+                let lhsSamePart = normalized(lhs.part_of_speech) == normalized(partOfSpeech)
+                let rhsSamePart = normalized(rhs.part_of_speech) == normalized(partOfSpeech)
+                if lhsSamePart != rhsSamePart {
+                    return lhsSamePart && !rhsSamePart
+                }
+
+                let lhsSameLevel = normalized(lhs.cefr_level) == normalized(cefrLevel)
+                let rhsSameLevel = normalized(rhs.cefr_level) == normalized(cefrLevel)
+                if lhsSameLevel != rhsSameLevel {
+                    return lhsSameLevel && !rhsSameLevel
+                }
+
+                let lhsDistance = abs((lhs.frequency_rank ?? .max) - frequencyRank)
+                let rhsDistance = abs((rhs.frequency_rank ?? .max) - frequencyRank)
+                if lhsDistance != rhsDistance {
+                    return lhsDistance < rhsDistance
+                }
+
+                return lhs.lemma.localizedCaseInsensitiveCompare(rhs.lemma) == .orderedAscending
+            }
+            .prefix(limit)
+            .map { $0 }
+    }
+
+    private static func normalized(_ value: String?) -> String {
+        value?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
     }
 }
 

@@ -24,16 +24,7 @@ struct NotificationEducationStepView: View {
             }
 
             LDCard {
-                VStack(alignment: .leading, spacing: LDSpacing.xs) {
-                    Text("Preview notification")
-                        .font(LDTypography.overline())
-                        .foregroundStyle(LDColor.inkSecondary)
-                    Text("Your French word is ready: Bonjour")
-                        .font(LDTypography.bodyBold())
-                    Text("Tap to hear pronunciation and examples.")
-                        .font(LDTypography.caption())
-                        .foregroundStyle(LDColor.inkSecondary)
-                }
+                previewContent
             }
 
             VStack(spacing: LDSpacing.sm) {
@@ -55,6 +46,39 @@ struct NotificationEducationStepView: View {
         .onAppear {
             viewModel.trackNotificationEducationViewed()
             viewModel.skipNotifications()
+        }
+        .task {
+            await viewModel.loadNotificationPreviewIfNeeded()
+        }
+    }
+
+    @ViewBuilder
+    private var previewContent: some View {
+        switch viewModel.notificationPreviewPhase {
+        case .idle, .loading:
+            VStack(alignment: .leading, spacing: LDSpacing.xs) {
+                Text("Preview notification")
+                    .font(LDTypography.overline())
+                    .foregroundStyle(LDColor.inkSecondary)
+                ProgressView()
+            }
+        case let .failure(error):
+            LDErrorStateView(error: error) {
+                Task { await viewModel.retryLoadingNotificationPreview() }
+            }
+        case .empty:
+            EmptyView()
+        case let .success(preview):
+            VStack(alignment: .leading, spacing: LDSpacing.xs) {
+                Text("Preview notification")
+                    .font(LDTypography.overline())
+                    .foregroundStyle(LDColor.inkSecondary)
+                Text(preview.title)
+                    .font(LDTypography.bodyBold())
+                Text(preview.body)
+                    .font(LDTypography.caption())
+                    .foregroundStyle(LDColor.inkSecondary)
+            }
         }
     }
 }

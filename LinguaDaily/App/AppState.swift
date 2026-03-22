@@ -8,6 +8,7 @@ final class AppState: ObservableObject {
     @Published var selectedTab: MainTab = .today
     @Published var path: [AppDestination] = []
     @Published var subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
+    @Published var appearancePreference: AppearancePreference = .system
     @Published var isBootstrapping = true
 
     var isAuthenticated: Bool { session != nil }
@@ -31,6 +32,7 @@ final class AppState: ObservableObject {
         onboardingState = .empty
         selectedTab = .today
         subscriptionState = SubscriptionState(tier: .free, isTrial: false, expiresAt: nil)
+        appearancePreference = .system
         resetNavigation()
     }
 }

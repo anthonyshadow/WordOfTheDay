@@ -212,8 +212,13 @@ enum SampleData {
             activeLanguage: french,
             learningGoal: .travel,
             level: .beginner,
+            preferredAccent: "parisian",
+            dailyLearningMode: .balanced,
+            appearancePreference: .system,
             reminderTime: Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date(),
             timezoneIdentifier: TimeZone.current.identifier,
+            currentStreakDays: 12,
+            bestStreakDays: 19,
             joinedAt: Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
         )
     }

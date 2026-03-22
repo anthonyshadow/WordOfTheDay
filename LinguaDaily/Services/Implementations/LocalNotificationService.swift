@@ -77,4 +77,13 @@ final class LocalNotificationService: NotificationServiceProtocol {
         )
         try await UNUserNotificationCenter.current().add(request)
     }
+
+    func fetchPreviewNotification(language: Language?) async throws -> NotificationPreview {
+        let languageName = language?.name ?? "Language"
+        let previewWord = language?.nativeName ?? "Word"
+        return NotificationPreview(
+            title: "Your \(languageName) word is ready: \(previewWord)",
+            body: "Tap to hear pronunciation and examples."
+        )
+    }
 }

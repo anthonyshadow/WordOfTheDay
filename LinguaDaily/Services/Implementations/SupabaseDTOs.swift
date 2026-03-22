@@ -132,6 +132,9 @@ struct ProfileDTO: Decodable {
     let learning_goal: LearningGoal?
     let active_language_id: UUID?
     let level: LearningLevel?
+    let preferred_accent: String?
+    let daily_learning_mode: DailyLearningMode?
+    let appearance: AppearancePreference?
     let reminder_time: String?
     let timezone: String?
     let streak_current: Int
@@ -155,6 +158,23 @@ struct ProgressMetricsDTO: Decodable {
     let correct_reviews: Int
     let learned_at: Date?
     let last_reviewed_at: Date?
+    let word: ProgressMetricsWordDTO?
+}
+
+struct ProgressMetricsWordDTO: Decodable {
+    let part_of_speech: String?
+}
+
+struct AssignmentDateDTO: Decodable {
+    let assignment_date: String
+}
+
+struct WordAudioAccentValueDTO: Decodable {
+    let accent: String
+}
+
+struct LanguageAccentContainerDTO: Decodable {
+    let word_audio: [WordAudioAccentValueDTO]
 }
 
 struct ReviewQueueInsertDTO: Encodable {

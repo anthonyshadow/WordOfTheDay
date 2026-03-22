@@ -5,6 +5,7 @@ import UserNotifications
 final class LinguaDailyAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     static var onDeepLinkTarget: ((DeepLinkTarget) -> Void)?
     static var onPushOpened: ((String) -> Void)?
+    static var onPushTokenReceived: ((Data) -> Void)?
 
     func application(
         _ application: UIApplication,
@@ -15,7 +16,7 @@ final class LinguaDailyAppDelegate: NSObject, UIApplicationDelegate, UNUserNotif
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        // Hook APNs token upload via PushRegistrationServiceProtocol when backend credentials are configured.
+        Self.onPushTokenReceived?(deviceToken)
         #if DEBUG
         print("[APNs] token bytes=\(deviceToken.count)")
         #endif

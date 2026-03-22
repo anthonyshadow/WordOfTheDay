@@ -68,6 +68,9 @@ struct SplashView: View {
     private func hydrateOnboardingStateIfNeeded() async {
         if appState.onboardingState.isCompleted {
             try? await dependencies.onboardingService.syncAuthenticatedState(appState.onboardingState)
+            if let profile = try? await dependencies.progressService.fetchProfile() {
+                appState.appearancePreference = profile.appearancePreference
+            }
             return
         }
 
@@ -76,6 +79,7 @@ struct SplashView: View {
             return
         }
 
+        appState.appearancePreference = profile.appearancePreference
         let restoredState = OnboardingState.completed(from: profile)
         do {
             try dependencies.onboardingService.saveOnboardingState(restoredState)

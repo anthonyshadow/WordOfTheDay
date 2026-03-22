@@ -28,12 +28,22 @@ struct LinguaDailyApp: App {
             RootView()
                 .environmentObject(dependencyContainer.appState)
                 .environmentObject(dependencyContainer)
+                .preferredColorScheme(colorScheme(for: dependencyContainer.appState.appearancePreference))
                 .onAppear {
                     LinguaDailyAppDelegate.onDeepLinkTarget = { target in
                         dependencyContainer.appState.handleDeepLink(target)
                     }
                     LinguaDailyAppDelegate.onPushOpened = { route in
                         dependencyContainer.analyticsService.track(.pushOpened, properties: ["route": route])
+                    }
+                    LinguaDailyAppDelegate.onPushTokenReceived = { tokenData in
+                        Task {
+                            do {
+                                try await dependencyContainer.pushRegistrationService.registerDeviceToken(tokenData)
+                            } catch {
+                                dependencyContainer.crashService.capture(error, context: ["feature": "push_token_register"])
+                            }
+                        }
                     }
                 }
                 .onOpenURL { url in
@@ -44,5 +54,16 @@ struct LinguaDailyApp: App {
                 }
         }
         .modelContainer(modelContainer)
+    }
+
+    private func colorScheme(for preference: AppearancePreference) -> ColorScheme? {
+        switch preference {
+        case .system:
+            return nil
+        case .light:
+            return .light
+        case .dark:
+            return .dark
+        }
     }
 }

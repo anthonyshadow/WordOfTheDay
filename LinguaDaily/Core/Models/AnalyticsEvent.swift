@@ -41,10 +41,13 @@ enum AnalyticsEvent: String {
     case archiveFilterChanged = "archive_filter_changed"
     case archiveSortChanged = "archive_sort_changed"
     case archiveWordOpened = "archive_word_opened"
+    case relatedWordOpened = "related_word_opened"
 
     case progressOpened = "progress_opened"
     case profileOpened = "profile_opened"
+    case profileUpdated = "profile_updated"
     case settingsOpened = "settings_opened"
+    case settingsUpdated = "settings_updated"
     case streakExtended = "streak_extended"
 
     case notificationsEducationViewed = "notifications_education_viewed"
@@ -53,6 +56,7 @@ enum AnalyticsEvent: String {
     case notificationPermissionGranted = "notification_permission_granted"
     case reminderTimeSet = "reminder_time_set"
     case pushOpened = "push_opened"
+    case pushTokenRegistered = "push_token_registered"
 
     case paywallOpened = "paywall_opened"
     case paywallViewed = "paywall_viewed"
@@ -62,4 +66,5 @@ enum AnalyticsEvent: String {
     case purchaseSuccess = "purchase_success"
     case purchaseFailed = "purchase_failed"
     case restorePurchasesTapped = "restore_purchases_tapped"
+    case accountDeleted = "account_deleted"
 }

@@ -28,10 +28,10 @@ struct TodayView: View {
                 Text("Today")
                     .font(LDTypography.title())
                 Spacer()
-                Label("12", systemImage: "flame.fill")
+                Label("\(viewModel.currentStreakDays)", systemImage: "flame.fill")
                     .font(LDTypography.caption())
                     .foregroundStyle(LDColor.warning)
-                    .accessibilityLabel("Current streak 12")
+                    .accessibilityLabel("Current streak \(viewModel.currentStreakDays)")
             }
             Text(Date.now.formatted(date: .abbreviated, time: .omitted))
                 .font(LDTypography.caption())
@@ -141,6 +141,7 @@ struct TodayView: View {
         viewModel: TodayViewModel(
             lessonService: dependencies.dailyLessonService,
             reviewService: dependencies.reviewService,
+            progressService: dependencies.progressService,
             audioPlayer: dependencies.audioPlayerService,
             cacheStore: dependencies.cacheStore,
             analytics: dependencies.analyticsService,

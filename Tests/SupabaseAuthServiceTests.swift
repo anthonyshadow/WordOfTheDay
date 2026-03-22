@@ -83,12 +83,22 @@ final class SupabaseAuthServiceTests: XCTestCase {
             XCTFail("Unexpected error: \(error)")
         }
     }
+
+    func testDeleteAccountPassesThroughToClient() async throws {
+        let client = MockSupabaseAuthClient()
+        let service = SupabaseAuthService(client: client)
+
+        try await service.deleteAccount()
+
+        XCTAssertEqual(client.deleteAccountCallCount, 1)
+    }
 }
 
 private final class MockSupabaseAuthClient: SupabaseAuthClientProtocol {
     private(set) var signInCalls: [(email: String, password: String)] = []
     private(set) var signUpCalls: [(email: String, password: String, metadata: [String: AnyJSON])] = []
     private(set) var signOutCallCount = 0
+    private(set) var deleteAccountCallCount = 0
 
     var restoreSessionResult: Result<AuthSession?, Error> = .success(nil)
     var signInResult: Result<AuthSession, Error> = .success(TestData.session())
@@ -114,6 +124,10 @@ private final class MockSupabaseAuthClient: SupabaseAuthClientProtocol {
         if let signOutError {
             throw signOutError
         }
+    }
+
+    func deleteAccount() async throws {
+        deleteAccountCallCount += 1
     }
 }
 

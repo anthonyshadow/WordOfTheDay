@@ -15,6 +15,7 @@ final class AppDependencyContainer: ObservableObject {
     let archiveService: ArchiveServiceProtocol
     let progressService: ProgressServiceProtocol
     let notificationService: NotificationServiceProtocol
+    let pushRegistrationService: PushRegistrationServiceProtocol
     let subscriptionService: SubscriptionServiceProtocol
     let analyticsService: AnalyticsServiceProtocol
     let crashService: CrashReportingServiceProtocol
@@ -36,21 +37,26 @@ final class AppDependencyContainer: ObservableObject {
         }
 
         if let supabaseConfig = environment.supabaseConfig {
+            let notificationService = SupabaseNotificationService(config: supabaseConfig)
             self.authService = SupabaseAuthService(config: supabaseConfig)
             self.onboardingService = SupabaseOnboardingService(config: supabaseConfig, store: keyValueStore)
             self.dailyLessonService = SupabaseDailyLessonService(config: supabaseConfig)
             self.reviewService = SupabaseReviewService(config: supabaseConfig)
             self.archiveService = SupabaseArchiveService(config: supabaseConfig)
             self.progressService = SupabaseProgressService(config: supabaseConfig)
+            self.notificationService = notificationService
+            self.pushRegistrationService = notificationService
         } else {
+            let notificationService = StubNotificationService()
             self.authService = StubAuthService()
             self.onboardingService = StubOnboardingService(store: keyValueStore)
             self.dailyLessonService = StubDailyLessonService()
             self.reviewService = StubReviewService()
             self.archiveService = StubArchiveService()
             self.progressService = StubProgressService()
+            self.notificationService = notificationService
+            self.pushRegistrationService = notificationService
         }
-        self.notificationService = LocalNotificationService(store: keyValueStore)
         self.subscriptionService = RevenueCatSubscriptionService(
             apiKey: environment.revenueCatKey,
             sessionProvider: sessionProvider

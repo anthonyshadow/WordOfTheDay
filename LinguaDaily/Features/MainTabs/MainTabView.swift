@@ -10,6 +10,7 @@ struct MainTabView: View {
                 viewModel: TodayViewModel(
                     lessonService: dependencies.dailyLessonService,
                     reviewService: dependencies.reviewService,
+                    progressService: dependencies.progressService,
                     audioPlayer: dependencies.audioPlayerService,
                     cacheStore: dependencies.cacheStore,
                     analytics: dependencies.analyticsService,
@@ -54,8 +55,10 @@ struct MainTabView: View {
             ProfileView(
                 viewModel: ProfileViewModel(
                     progressService: dependencies.progressService,
+                    onboardingService: dependencies.onboardingService,
                     analytics: dependencies.analyticsService,
-                    crash: dependencies.crashService
+                    crash: dependencies.crashService,
+                    appState: appState
                 )
             )
             .tabItem { Label(MainTab.profile.title, systemImage: MainTab.profile.systemImage) }
